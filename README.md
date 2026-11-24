@@ -1,0 +1,357 @@
+# RAG Agent Service
+
+面向扫地机器人 / 扫拖一体机器人场景的 RAG + Agent 智能客服服务。基于 LangChain 1.x `create_agent`、LangGraph、Chroma 与阿里云 DashScope，具备检索增强问答、ReAct 工具调用、场景化提示词切换与 SSE 流式输出能力。
+
+**技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · DashScope（qwen + text-embedding-v4）· Uvicorn
+
+
+
+***
+
+## 架构
+
+### 请求流程
+
+
+
+```
+用户输入
+   │
+   ├── CLI（main.py --mode cli）──────────────┐
+   └── HTTP（api/server.py，--mode api）──────┤
+                                              ▼
+                              Agent（create_agent + 中间件）
+                                 │  ① 带系统提示词与工具清单调用模型
+                                 │  ② 模型决定调哪个工具
+                                 │  ③ 工具结果回填 → 再次调用模型
+                                 │  ④ 不再请求工具 → 输出回答
+                                 ▼
+                     最终回答（一次性 / SSE 流式）
+```
+
+### 建库流程（启动时执行一次）
+
+
+
+```
+data/*.pdf|txt
+   │
+   ├─ DocumentLoader   读取 → 13 个 Document（PDF 按页拆）
+   ├─ Chunker          切分 → 326 个 chunk（chunk_size=200, overlap=20）
+   ├─ ChromaStore      按 chunk MD5 去重（已入库的跳过）
+   └─ Embedding        DashScope 向量化 → chroma_db/，MD5 记入 md5.text
+```
+
+### 分层依赖（单向）
+
+
+
+```
+utils / config  ←  document_loader / chunker / embedding / vector_store / rag_summarize / agent / api  ←  main.py
+```
+
+`main.py` 是唯一读配置、建实例、接线的地方（组装点）；下层模块只接收传进来的对象，不自己读配置、不自己建实例。
+
+
+
+***
+
+## 目录结构
+
+
+
+```
+rag_service/
+├── agent/
+│   ├── graph.py            # create_agent 组装 + run_agent / run_agent_stream
+│   ├── middleware.py       # monitor_tool / log_before_model / build_prompt_switch
+│   └── tools.py            # 7 个工具定义
+├── api/
+│   └── server.py           # FastAPI：/health、/chat、/chat/stream
+├── chunker/
+│   └── text_splitter.py    # build_splitter / split_documents
+├── config/
+│   ├── __init__.py         # BASE_DIR
+│   ├── rag.yml             # 模型相关
+│   ├── chroma.yml          # 知识库与切分相关
+│   ├── prompts.yml         # 提示词路径
+│   └── agent.yml           # 外部数据路径
+├── data/                   # 原始知识库（pdf / txt）+ external/records.csv
+├── document_loader/
+│   └── loader.py           # DocumentLoader：扫描目录、按类型加载、打 source 标签
+├── embedding/
+│   └── embeddings.py       # build_embedding_model（DashScope）
+├── prompts/                # main_prompt.txt / rag_summarize.txt / report_prompt.txt
+├── rag_summarize/
+│   └── rag_summarize.py    # RagSummarizeService：检索 + 拼 context + LLM 总结
+├── utils/                  # config_handler / logger_handler / path_tool / prompt_loader
+├── vector_store/
+│   └── chroma_store.py     # ChromaStore：初始化、MD5 去重入库、获取 retriever
+├── chroma_db/              # 向量库持久化目录（自动生成）
+├── logs/app.log            # 运行日志（自动生成）
+├── md5.text                # 已入库 chunk 的 MD5 清单（自动生成）
+├── main.py                 # 入口：CLI / API
+└── requirements.txt
+```
+
+
+
+***
+
+## 快速开始
+
+### 1. 环境
+
+
+
+```
+cd D:\Python-Project\rag_service
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### 2. 配置 API Key
+
+对话模型与向量化模型都走阿里云百炼（DashScope），用的是**同一个 key**，但两个客户端读的环境变量名不同，需要都配置：
+
+```
+# 向量化（DashScopeEmbeddings）读这个
+$env:DASHSCOPE_API_KEY = "sk-xxxx"
+
+# 对话模型（ChatOpenAI）读这个，值和上面相同
+$env:OPENAI_API_KEY = "sk-xxxx"
+```
+
+也可以在项目根目录建 `.env` 文件（`main.py` 会自动加载），写上面两行即可。
+
+说明：`ChatOpenAI` 是 OpenAI SDK 的封装，默认读 `OPENAI_API_KEY`；本项目未显式传 `api_key`，所以要配它，否则对话模型会 401。
+
+### 3. 启动
+
+
+
+```
+# CLI 交互模式（流式打印）
+python main.py
+
+# API 服务模式
+python main.py --mode api --host 0.0.0.0 --port 8000
+```
+
+启动成功会依次打印：`RAG Agent 服务启动` → 文档加载与切分 → `No new documents to add`（首次会是 `Adding 326 new chunks`）→ `Agent 图构建完成` → `Uvicorn running on ...`。
+
+首次启动会向量化 326 个 chunk（耗时、消耗 token）；之后启动命中 MD5 去重，秒级完成。
+
+
+
+***
+
+## 接口说明
+
+服务启动后，Swagger 文档：`http://127.0.0.1:8000/docs`
+
+### `GET /health`
+
+
+
+```
+{"status": "ok"}
+```
+
+### `POST /chat` —— 一次性返回
+
+请求：
+
+
+
+```
+{"message": "拖布发臭怎么处理？"}
+```
+
+响应（等待全部工具调用完成后返回，通常 20\~100 秒）：
+
+
+
+```
+{"reply": "拖布发臭主要来自……"}
+```
+
+### `POST /chat/stream` —— SSE 流式
+
+请求体同上。响应为 `text/event-stream`：
+
+
+
+```
+data: {"delta": "拖布"}
+data: {"delta": "发臭"}
+...
+data: [DONE]
+```
+
+出错时会推送 `data: {"error": "..."}` 后以 `[DONE]` 结束。
+
+
+
+```
+# 命令行验证（-N 关闭缓冲才能看到逐条推送）
+curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
+  -H "Content-Type: application/json" `
+  -d '{\"message\":\"拖布发臭怎么处理？\"}'
+```
+
+
+
+***
+
+## 配置说明
+
+配置只在 `main.py`（以及 `agent/tools.py` 读取 `agent.yml`）处读取，**改完必须重启进程**（`load_config` 有进程内缓存）。
+
+### `config/rag.yml`
+
+
+
+| 键                 | 说明                       |
+| ----------------- | ------------------------ |
+| `chat_model`      | 对话模型                     |
+| `model_base_url`  | OpenAI 兼容网关地址（DashScope） |
+| `embedding_model` | 向量化模型                    |
+
+### `config/chroma.yml`
+
+
+
+| 键                                             | 说明                        |
+| --------------------------------------------- | ------------------------- |
+| `collection_name`                             | Chroma 集合名                |
+| `persist_directory`                           | 持久化目录（相对项目根）              |
+| `md5_hex_store`                               | 去重清单文件路径；删除该键则关闭去重、每次全量入库 |
+| `data_path`                                   | 知识库目录                     |
+| `allow_knowledge_file_types`                  | 参与建库的文件后缀                 |
+| `chunk_size` / `chunk_overlap` / `separators` | 切分参数（唯一来源，代码内不再有默认值）      |
+| `k`                                           | 检索召回条数                    |
+
+### `config/prompts.yml`
+
+`main_prompt_path`（默认系统提示词）、`report_prompt_path`（报告场景）、`rag_summarize_prompt_path`（检索总结模板，含 `{input}` / `{context}` 占位符）。
+
+### `config/agent.yml`
+
+`external_data_path`：用户使用记录 CSV 的路径。
+
+
+
+***
+
+## 可用工具
+
+
+
+| 工具                                    | 说明                                         |
+| ------------------------------------- | ------------------------------------------ |
+| `rag_summarize(query)`                | 从向量库检索专业资料并 LLM 总结                         |
+| `get_user_location()`                 | 获取用户所在城市（演示用随机值）                           |
+| `get_weather(city)`                   | 获取城市天气（演示实现）                               |
+| `get_user_id()`                       | 获取用户 ID                                    |
+| `get_current_month()`                 | 获取月份（YYYY-MM）                              |
+| `fetch_external_data(user_id, month)` | 查询该用户该月使用记录（读 `data/external/records.csv`） |
+| `fill_context_for_report()`           | 触发报告场景提示词切换                                |
+
+中间件：`monitor_tool`（工具调用日志 + 报告标记）、`log_before_model`（模型调用前日志）、`build_prompt_switch`（按 `context["report"]` 切换提示词）。
+
+
+
+***
+
+## 设计要点
+
+
+
+* **配置集中**：`main.py` 读 yml → 传参给下层；模块内不 import 配置，便于单独测试与替换实现。
+
+* **chunk 级幂等入库**：以 chunk 内容 MD5 作为 Chroma 主键，重复启动不重复向量化；同批次内也去重。
+
+* **MD5 清单增量写**：`_append_md5s` 只追加新记录，配合 `compact_md5s()` 整理，避免每次重写整份文件。
+
+* **Agent 编排**：使用 `create_agent`，ReAct 循环、工具次数上限、终止条件交给框架；中间件承担日志与提示词切换。
+
+* **双形态输出**：`run_agent`（一次性）与 `run_agent_stream`（`stream_mode="messages"` 流式）共用同一套工具与配置。
+
+* **可观测**：控制台与 `logs/app.log` 同时记录，日志名带模块路径（如 `rag_service.agent.middleware`），能直接定位来源。
+
+
+
+***
+
+## 常见问题
+
+**启动报 DASHSCOPE_API_KEY 相关错误 / 对话模型返回 401**
+
+环境变量没被读到。对话链路需要 `OPENAI_API_KEY`，向量化需要 `DASHSCOPE_API_KEY`，两者填同一个百炼 key；先确认这两个变量都有值，或在项目根放 `.env`。`.env` 不会覆盖系统里已有的同名变量。
+
+`[Errno 10048] error while attempting to bind on address ('0.0.0.0', 8000)`
+
+端口被占用。换端口 `--port 8001`；或查占用进程后结束：
+
+
+
+```
+Get-NetTCPConnection -LocalPort 8000 -State Listen | Select-Object OwningProcess
+Stop-Process -Id <PID>
+```
+
+**改了 yml 但不生效**
+
+配置有进程内缓存，需重启服务。
+
+**每次启动都显示 No new documents to add 正常吗**
+
+正常。chunk MD5 已在 `md5.text` 中，说明库已建好，没有重复向量化。
+
+**回答要等很久**
+
+Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结，单轮约 20\~35 秒。想更快可调小 `k` 或收紧系统提示词。流式接口（`/chat/stream`）可先看到首字（约 3 秒）。
+
+**如何重建知识库**
+
+删掉 `chroma_db/` 目录与 `md5.text`，重启即可全量重建（会重新向量化，消耗 token）。
+
+**怎么换模型 / 换向量库**
+
+模型改 `config/rag.yml`；换向量库实现只改 `vector_store/` 一层，上层调用 `as_retriever(k)` 不变。
+
+**某个 PDF 损坏导致启动失败**
+
+`DocumentLoader.load_all()` 目前没有逐文件容错，坏文件会中断建库。建议先从 `data/` 移出该文件。
+
+
+
+***
+
+## 改动记录
+
+相对课程原项目 RAG-Agent 的重构与修正：
+
+
+
+* **模块化拆分**：按 document\_loader /chunker/embedding /vector\_store/rag\_summarize /agent/api 分层，配置与路径统一收进 utils 与 config。
+
+* **配置集中与传参**：`main.py` 统一读 yml 并显式传参；`build_splitter` 去掉内置默认值，切分参数唯一来源为 `config/chroma.yml`。
+
+* **Agent 编排**：改用 `create_agent` + 中间件（日志、报告提示词切换）。此前手写 StateGraph 时修复过 `messages` 未用 `Annotated[list, add_messages]` 导致历史被覆盖、工具调用死循环的问题。
+
+* **流式输出**：新增 `run_agent_stream` 与 `POST /chat/stream`（SSE）。
+
+* **日志**：子 logger 挂到 `rag_service.*` 命名空间，模块日志可正常写入 `logs/app.log`。
+
+* **入库去重**：判断改用滚动集合 `seen`，覆盖「库内已有 + 本批内重复」。
+
+* **MD5 清单**：全量重写改为增量追加，新增 `compact_md5s()`。
+
+* **文档元数据**：`source` 统一为纯文件名，不写入本机绝对路径。
+
+* **外部数据路径**：`fetch_external_data` 读 `config/agent.yml`。
+
+* **清理**：移除 `if True` 调试残留、重复的 `setup_logger()` 调用、未使用的 `PromptLoader.format()` 与 `add_documents` 的 `upsert` 形参。
