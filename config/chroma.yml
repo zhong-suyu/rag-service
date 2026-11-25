@@ -2,6 +2,10 @@
 collection_name: agent
 persist_directory: chroma_db
 k: 3
+# 检索策略：vector 仅向量；hybrid 向量 + BM25 双路召回（RRF 融合）
+retrieval_mode: hybrid
+hybrid_candidate_k: 10   # 每路各召回多少条候选再融合
+rrf_k: 60                # RRF 平滑常数
 data_path: data
 md5_hex_store: md5.text
 allow_knowledge_file_types: ['pdf', 'txt']

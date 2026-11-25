@@ -1,8 +1,10 @@
 # RAG Agent Service
 
-面向扫地机器人 / 扫拖一体机器人场景的 RAG + Agent 智能客服服务。基于 LangChain 1.x `create_agent`、LangGraph、Chroma 与阿里云 DashScope，具备检索增强问答、ReAct 工具调用、场景化提示词切换与 SSE 流式输出能力。
+面向扫地机器人 / 扫拖一体机器人场景的 RAG + Agent 智能客服服务。基于 LangChain 1.x `create_agent`、LangGraph、Chroma 与阿里云 DashScope，具备检索增强问答、ReAct 工具调用、**向量 + BM25 混合检索**、**答案出处标注**、场景化提示词切换与 SSE 流式输出能力。
 
-**技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · DashScope（qwen + text-embedding-v4）· Uvicorn
+**技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · jieba + rank_bm25 · DashScope（qwen + text-embedding-v4）· Uvicorn
+
+**效果**：自建 24 题评估集（20 正 / 4 负），混合检索 hit@3 **95%**（纯向量 75%），MRR 0.892，详见 [`eval/report.md`](eval/report.md)。
 
 
 
@@ -81,9 +83,15 @@ rag_service/
 │   └── loader.py           # DocumentLoader：扫描目录、按类型加载、打 source 标签
 ├── embedding/
 │   └── embeddings.py       # build_embedding_model（DashScope）
-├── prompts/                # main_prompt.txt / rag_summarize.txt / report_prompt.txt
+├── eval/                   # 检索效果评估（离线，不依赖服务）
+│   ├── questions.json      # 24 条评估样本（20 正 + 4 负）
+│   ├── run_eval.py         # hit@k / MRR / 来源命中 / 耗时，支持 --mode vector|hybrid
+│   └── report.md           # 评估报告（对比两种检索策略）
+├── prompts/                # main_prompt.txt / rag_summarize.txt / rag_summarize_cited.txt / report_prompt.txt
 ├── rag_summarize/
-│   └── rag_summarize.py    # RagSummarizeService：检索 + 拼 context + LLM 总结
+│   └── rag_summarize.py    # RagSummarizeService：检索 + 拼 context + LLM 总结（含出处）
+├── retrieval/
+│   └── hybrid_retriever.py # HybridRetriever：向量 + BM25 双路召回，RRF 融合
 ├── utils/                  # config_handler / logger_handler / path_tool / prompt_loader
 ├── vector_store/
 │   └── chroma_store.py     # ChromaStore：初始化、MD5 去重入库、获取 retriever
@@ -205,6 +213,28 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 ***
 
+## 效果验证
+
+自建 24 题评估集（选购 / 维护 / 故障 / 使用四类，含 4 条库里没有答案的负样本），
+对 `chroma_db` 里的真实索引跑 top-3 检索，命中标准 = 返回的块里至少含答案关键词。
+
+```
+.venv\Scripts\python.exe eval\run_eval.py --mode vector   # 基线
+.venv\Scripts\python.exe eval\run_eval.py --mode hybrid   # 混合检索
+```
+
+| 指标 | 仅向量 | 混合检索 |
+| --- | --- | --- |
+| hit@3 | 75.0% | **95.0%** |
+| MRR | 0.667 | **0.892** |
+| 来源命中率 | 90.0% | **100.0%** |
+| 平均检索耗时 | 263 ms | 342 ms（含首次建 BM25 索引） |
+
+提升主要来自参数类问题：`地毯场景需≥4000Pa`、`集尘袋容量≥2.5L`、`充电座前方3米` 这类
+数字+单位的答案，纯向量召不回，BM25 词面命中能抓到。完整分析和剩余漏召见 [`eval/report.md`](eval/report.md)。
+
+***
+
 ## 配置说明
 
 配置只在 `main.py`（以及 `agent/tools.py` 读取 `agent.yml`）处读取，**改完必须重启进程**（`load_config` 有进程内缓存）。
@@ -232,10 +262,13 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 | `allow_knowledge_file_types`                  | 参与建库的文件后缀                 |
 | `chunk_size` / `chunk_overlap` / `separators` | 切分参数（唯一来源，代码内不再有默认值）      |
 | `k`                                           | 检索召回条数                    |
+| `retrieval_mode`                              | `vector` 仅向量；`hybrid` 向量 + BM25 融合（默认） |
+| `hybrid_candidate_k`                          | 每路各召回多少条候选再融合             |
+| `rrf_k`                                       | RRF 平滑常数，默认 60              |
 
 ### `config/prompts.yml`
 
-`main_prompt_path`（默认系统提示词）、`report_prompt_path`（报告场景）、`rag_summarize_prompt_path`（检索总结模板，含 `{input}` / `{context}` 占位符）。
+`main_prompt_path`（默认系统提示词）、`report_prompt_path`（报告场景）、`rag_summarize_prompt_path`（检索总结模板，含 `{input}` / `{context}` 占位符）、`rag_summarize_cited_prompt_path`（带 `[编号]` 出处标注的总结模板）。
 
 ### `config/agent.yml`
 
@@ -280,6 +313,12 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 * **双形态输出**：`run_agent`（一次性）与 `run_agent_stream`（`stream_mode="messages"` 流式）共用同一套工具与配置。
 
 * **可观测**：控制台与 `logs/app.log` 同时记录，日志名带模块路径（如 `rag_service.agent.middleware`），能直接定位来源。
+
+* **混合检索**：向量一路负责语义相近，BM25 一路负责数字/术语字面命中，用 RRF（`Σ 1/(60+rank)`）融合，不依赖两路分数归一化。
+
+* **答案可溯源**：`invoke_with_sources` 在参考资料前加 `[编号]` 与来源文件名，提示词要求每条结论标注编号，返回体同时给出 `sources` 列表（文件名 + 片段）。
+
+* **不做距离阈值拒答**：实测负样本 top1 距离（0.53\~0.69）与命中题（最高 0.88）区间重叠，绝对距离分不清相关与否，改由提示词约束「资料中没有就说明未提及」。
 
 
 
@@ -355,3 +394,9 @@ Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结�
 * **外部数据路径**：`fetch_external_data` 读 `config/agent.yml`。
 
 * **清理**：移除 `if True` 调试残留、重复的 `setup_logger()` 调用、未使用的 `PromptLoader.format()` 与 `add_documents` 的 `upsert` 形参。
+
+* **检索评估**：新增 `eval/`（评估集 + 脚本 + 报告），把「检索好不好」从主观感觉变成可复现的数字。
+
+* **混合检索**：新增 `retrieval/hybrid_retriever.py`，向量 + BM25 双路召回归一化融合，`config/chroma.yml` 用 `retrieval_mode` 切换；hit@3 由 75% 提升到 95%。
+
+* **出处标注**：新增 `prompts/rag_summarize_cited.txt` 与 `RagSummarizeService.invoke_with_sources`，答案带 `[编号]`，同时返回来源文件名与片段。

@@ -1,0 +1,573 @@
+{
+  "summary": {
+    "timestamp": "2026-11-25 15:25:43",
+    "mode": "hybrid",
+    "k": 3,
+    "total": 24,
+    "positives": 20,
+    "negatives": 4,
+    "hit_rate": 0.95,
+    "mrr": 0.8916666666666667,
+    "source_rate": 1.0,
+    "latency_mean": 342.21666666666664,
+    "latency_p95": 870.3
+  },
+  "rows": [
+    {
+      "id": "q01",
+      "type": "选购",
+      "question": "家用扫地机器人建议选多少 Pa 以上吸力？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "扫拖一体机器人100问.txt",
+        "选购指南.txt"
+      ],
+      "top1_preview": "扫地/扫拖一体机器人选购指南200条  1. 选购核心：优先明确使用场景，独居小户型侧重轻便灵活，多口之家带宠物需强化吸力和防缠绕功能。  2. 吸力参数：家用",
+      "latency_ms": 2740.4
+    },
+    {
+      "id": "q02",
+      "type": "选购",
+      "question": "地毯场景需要多大吸力？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "选购指南.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "扫地/扫拖一体机器人选购指南200条  1. 选购核心：优先明确使用场景，独居小户型侧重轻便灵活，多口之家带宠物需强化吸力和防缠绕功能。  2. 吸力参数：家用",
+      "latency_ms": 176.4
+    },
+    {
+      "id": "q03",
+      "type": "选购",
+      "question": "带宠物的家庭优先选哪种避障方式？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "选购指南.txt",
+        "选购指南.txt"
+      ],
+      "top1_preview": "4. 避障能力：3D结构光避障识别精度优于红外，可有效避开细小杂物，带宠物家庭优先选此配置。  5. 续航时长：小户型（≤80㎡）需≥60分钟，大户型（≥120",
+      "latency_ms": 185.9
+    },
+    {
+      "id": "q04",
+      "type": "选购",
+      "question": "小户型 80 平米以内续航至少需要多久？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "扫地机器人100问.pdf",
+        "选购指南.txt"
+      ],
+      "top1_preview": "4. 避障能力：3D结构光避障识别精度优于红外，可有效避开细小杂物，带宠物家庭优先选此配置。  5. 续航时长：小户型（≤80㎡）需≥60分钟，大户型（≥120",
+      "latency_ms": 149.7
+    },
+    {
+      "id": "q05",
+      "type": "选购",
+      "question": "集尘袋容量建议多大才能减少更换频率？",
+      "is_negative": false,
+      "hit": false,
+      "hit_ranks": [],
+      "first_rank": null,
+      "mrr": 0.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "选购指南.txt",
+        "扫地机器人100问2.txt"
+      ],
+      "top1_preview": "107. 集尘电机：自动集尘款电机吸力≥2000Pa，确保尘盒灰尘完全吸入集尘袋。  108. 集尘袋材质：无纺布集尘袋防漏灰、容量大，可降解材质更环保，根据需",
+      "latency_ms": 642.8
+    },
+    {
+      "id": "q06",
+      "type": "选购",
+      "question": "床底高度只有 8cm 时应该选机身高度多少的机型？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        2
+      ],
+      "first_rank": 2,
+      "mrr": 0.5,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "扫地机器人100问.pdf",
+      "top1_score": null,
+      "sources": [
+        "扫地机器人100问.pdf",
+        "选购指南.txt",
+        "选购指南.txt"
+      ],
+      "top1_preview": "12. **最大越障高度是多少？** - 多数机型 1.5-2cm，高端机型可达 2.5cm。",
+      "latency_ms": 175.8
+    },
+    {
+      "id": "q07",
+      "type": "选购",
+      "question": "担心拖布发霉有异味，应该优先选什么配置？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "选购指南.txt",
+        "选购指南.txt"
+      ],
+      "top1_preview": "7. 拖布类型：电动旋转拖布清洁力优于静压拖布，顽固污渍场景必备，木地板建议选可抬升拖布款。  8. 集尘功能：懒人首选自动集尘款，集尘袋容量≥2.5L可减少更",
+      "latency_ms": 161.3
+    },
+    {
+      "id": "q08",
+      "type": "选购",
+      "question": "门槛高 2cm 时应选越障能力多少的机型？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "选购指南.txt",
+      "top1_source": "扫地机器人100问.pdf",
+      "top1_score": null,
+      "sources": [
+        "扫地机器人100问.pdf",
+        "选购指南.txt",
+        "扫拖一体机器人100问.txt"
+      ],
+      "top1_preview": "12. **最大越障高度是多少？** - 多数机型 1.5-2cm，高端机型可达 2.5cm。",
+      "latency_ms": 163.5
+    },
+    {
+      "id": "q09",
+      "type": "维护",
+      "question": "充电触点多久清洁一次，怎么清洁？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "维护保养.txt",
+      "top1_source": "维护保养.txt",
+      "top1_score": null,
+      "sources": [
+        "维护保养.txt",
+        "选购指南.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "12. 电池：正常使用2-3年更换，若续航衰减至原续航50%以下、充不进电或鼓包，立即更换原装电池。 13. 一次性拖布：单次使用，随用随换，不可重复使用。 1",
+      "latency_ms": 154.6
+    },
+    {
+      "id": "q10",
+      "type": "维护",
+      "question": "万向轮转轴多久滴一次润滑油？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "维护保养.txt",
+      "top1_source": "维护保养.txt",
+      "top1_score": null,
+      "sources": [
+        "维护保养.txt",
+        "扫地机器人100问2.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "12. 每周用软毛刷清理机器人散热口，避免灰尘堵塞导致电机过热保护。 13. 每周轻按防撞条多次，检查回弹是否正常，若卡顿及时拆解清理内部杂物。 14. 每周擦",
+      "latency_ms": 151.1
+    },
+    {
+      "id": "q11",
+      "type": "维护",
+      "question": "清扫机器人时需要断开电源吗？能用水冲洗机身吗？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "维护保养.txt",
+      "top1_source": "维护保养.txt",
+      "top1_score": null,
+      "sources": [
+        "维护保养.txt",
+        "维护保养.txt",
+        "维护保养.txt"
+      ],
+      "top1_preview": "7. 每日检查机身底部防跌落、沿边传感器，用干布轻擦表面，无灰尘、水渍遮挡。 8. 清洁机器人时，全程断开电源，切勿用水直接冲洗机身（防水机型仅可擦拭，不可浸泡",
+      "latency_ms": 248.1
+    },
+    {
+      "id": "q12",
+      "type": "故障",
+      "question": "电池鼓包应该怎么处理？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "故障排除.txt",
+      "top1_source": "故障排除.txt",
+      "top1_score": null,
+      "sources": [
+        "故障排除.txt",
+        "故障排除.txt",
+        "扫地机器人100问2.txt"
+      ],
+      "top1_preview": "11. 故障现象：充电时指示灯闪烁，无法正常充电；检测：充电触点是否氧化、有灰尘，电源适配器是否故障，电池是否损坏；修复：用干布擦拭充电触点，更换适配电源适配器",
+      "latency_ms": 234.6
+    },
+    {
+      "id": "q13",
+      "type": "故障",
+      "question": "吸力明显下降要检查哪些部位？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "故障排除.txt",
+      "top1_source": "故障排除.txt",
+      "top1_score": null,
+      "sources": [
+        "故障排除.txt",
+        "扫地机器人100问2.txt",
+        "扫拖一体机器人100问.txt"
+      ],
+      "top1_preview": "7. 故障现象：吸力明显下降；检测：尘盒、滤网、风道是否堵塞，主刷是否缠绕杂物，吸口是否被遮挡；修复：逐一清理堵塞部位，剪断主刷缠绕毛发，检查吸口无异物。  8",
+      "latency_ms": 153.2
+    },
+    {
+      "id": "q14",
+      "type": "故障",
+      "question": "主刷不旋转可能是什么原因？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "故障排除.txt",
+      "top1_source": "故障排除.txt",
+      "top1_score": null,
+      "sources": [
+        "故障排除.txt",
+        "扫地机器人100问.pdf",
+        "扫地机器人100问2.txt"
+      ],
+      "top1_preview": "109. 故障现象：主刷旋转速度变慢，清扫无力；检测：主刷是否缠绕杂物，电机是否老化，电压是否稳定；修复：清理杂物，联系售后检测电机，确保充电稳定。  110.",
+      "latency_ms": 161.0
+    },
+    {
+      "id": "q15",
+      "type": "故障",
+      "question": "机器人连不上 WiFi 时应该先检查什么？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "故障排除.txt",
+      "top1_source": "故障排除.txt",
+      "top1_score": null,
+      "sources": [
+        "故障排除.txt",
+        "故障排除.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "3. 故障现象：机器人无法连接WiFi；检测：确认手机与机器人连同一2.4G网络，WiFi密码是否正确，机器人WiFi模块是否被遮挡；修复：重启路由器和机器人，",
+      "latency_ms": 198.0
+    },
+    {
+      "id": "q16",
+      "type": "使用",
+      "question": "充电座前方需要留出多大空间？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "扫地机器人100问2.txt",
+      "top1_source": "扫地机器人100问2.txt",
+      "top1_score": null,
+      "sources": [
+        "扫地机器人100问2.txt",
+        "选购指南.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "- 清理充电座周围障碍物，保证充电座前方3米、左右1米无遮挡，将机器人放回充电座附近重启回充。 4. **APP无法连接机器人怎么办？** - 确认手机和机器人",
+      "latency_ms": 171.9
+    },
+    {
+      "id": "q17",
+      "type": "使用",
+      "question": "电量低于多少会优先回充？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "扫地机器人100问2.txt",
+      "top1_source": "选购指南.txt",
+      "top1_score": null,
+      "sources": [
+        "选购指南.txt",
+        "选购指南.txt",
+        "扫地机器人100问2.txt"
+      ],
+      "top1_preview": "58. 电量提醒：APP和机身指示灯双重提醒低电量，剩余电量≥20%时自动回充，避免中途停机。  59. 电机类型：无刷电机噪音小、寿命长（≥5000小时），优",
+      "latency_ms": 181.3
+    },
+    {
+      "id": "q18",
+      "type": "使用",
+      "question": "建图不完整、地图错乱怎么解决？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1,
+        2,
+        3
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "扫地机器人100问2.txt",
+      "top1_source": "故障排除.txt",
+      "top1_score": null,
+      "sources": [
+        "故障排除.txt",
+        "扫地机器人100问2.txt",
+        "故障排除.txt"
+      ],
+      "top1_preview": "13. 故障现象：建图不完整、地图错乱；检测：环境是否有反光物，移动障碍物是否过多，传感器是否异常；修复：遮挡反光物，清理移动障碍物，删除旧地图重新建图。  1",
+      "latency_ms": 190.8
+    },
+    {
+      "id": "q19",
+      "type": "使用",
+      "question": "扫拖一体机器人可以只拖地不扫地吗？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        3
+      ],
+      "first_rank": 3,
+      "mrr": 0.3333333333333333,
+      "source_hit": true,
+      "expected_source": "扫拖一体机器人100问.txt",
+      "top1_source": "扫拖一体机器人100问.txt",
+      "top1_score": null,
+      "sources": [
+        "扫拖一体机器人100问.txt",
+        "扫拖一体机器人100问.txt",
+        "扫拖一体机器人100问.txt"
+      ],
+      "top1_preview": "# 扫拖一体机器人常见问题及解答（新增100条） ### 拖扫功能融合类 1. **扫拖一体机器人可以只扫地不拖地吗？** - 可以，在配套APP中进入【清扫模",
+      "latency_ms": 189.1
+    },
+    {
+      "id": "q20",
+      "type": "使用",
+      "question": "如何设置先扫后拖的清洁流程？",
+      "is_negative": false,
+      "hit": true,
+      "hit_ranks": [
+        1
+      ],
+      "first_rank": 1,
+      "mrr": 1.0,
+      "source_hit": true,
+      "expected_source": "扫拖一体机器人100问.txt",
+      "top1_source": "扫拖一体机器人100问.txt",
+      "top1_score": null,
+      "sources": [
+        "扫拖一体机器人100问.txt",
+        "扫拖一体机器人100问.txt",
+        "扫拖一体机器人100问.txt"
+      ],
+      "top1_preview": "# 扫拖一体机器人常见问题及解答（新增100条） ### 拖扫功能融合类 1. **扫拖一体机器人可以只扫地不拖地吗？** - 可以，在配套APP中进入【清扫模",
+      "latency_ms": 176.2
+    },
+    {
+      "id": "n01",
+      "type": "负样本",
+      "question": "这款扫地机器人的售价是多少？",
+      "is_negative": true,
+      "hit": false,
+      "hit_ranks": [],
+      "first_rank": null,
+      "mrr": 0.0,
+      "source_hit": false,
+      "expected_source": "",
+      "top1_source": "扫地机器人100问.pdf",
+      "top1_score": null,
+      "sources": [
+        "扫地机器人100问.pdf",
+        "扫地机器人100问.pdf",
+        "选购指南.txt"
+      ],
+      "top1_preview": "- 随机碰撞→陀螺仪导航→激光导航→AI 视觉导航。 ## 十四、趣味知识类 97. **为什么叫\"扫地机器人\"而不是\"吸尘机器人\"？** - 早期产品以扫为主",
+      "latency_ms": 165.7
+    },
+    {
+      "id": "n02",
+      "type": "负样本",
+      "question": "扫地机器人可以帮忙洗衣服吗？",
+      "is_negative": true,
+      "hit": false,
+      "hit_ranks": [],
+      "first_rank": null,
+      "mrr": 0.0,
+      "source_hit": false,
+      "expected_source": "",
+      "top1_source": "扫拖一体机器人100问.txt",
+      "top1_score": null,
+      "sources": [
+        "扫拖一体机器人100问.txt",
+        "扫地机器人100问.pdf",
+        "扫地机器人100问.pdf"
+      ],
+      "top1_preview": "# 扫拖一体机器人常见问题及解答（新增100条） ### 拖扫功能融合类 1. **扫拖一体机器人可以只扫地不拖地吗？** - 可以，在配套APP中进入【清扫模",
+      "latency_ms": 154.4
+    },
+    {
+      "id": "n03",
+      "type": "负样本",
+      "question": "机器人能自动爬楼梯上楼吗？",
+      "is_negative": true,
+      "hit": false,
+      "hit_ranks": [],
+      "first_rank": null,
+      "mrr": 0.0,
+      "source_hit": false,
+      "expected_source": "",
+      "top1_source": "扫地机器人100问.pdf",
+      "top1_score": null,
+      "sources": [
+        "扫地机器人100问.pdf",
+        "扫地机器人100问.pdf",
+        "扫地机器人100问.pdf"
+      ],
+      "top1_preview": "100. **未来机器人能自动倒垃圾吗？** - 已有自动集尘机型，未来可能连接家庭垃圾处理系统。",
+      "latency_ms": 417.1
+    },
+    {
+      "id": "n04",
+      "type": "负样本",
+      "question": "扫地机器人可以给手机充电吗？",
+      "is_negative": true,
+      "hit": false,
+      "hit_ranks": [],
+      "first_rank": null,
+      "mrr": 0.0,
+      "source_hit": false,
+      "expected_source": "",
+      "top1_source": "扫拖一体机器人100问.txt",
+      "top1_score": null,
+      "sources": [
+        "扫拖一体机器人100问.txt",
+        "扫地机器人100问2.txt",
+        "扫地机器人100问2.txt"
+      ],
+      "top1_preview": "87. **如何自定义扫拖的路线？** - 支持“自定义路线”的机型，在APP中绘制扫拖路径，机器人将按绘制的路线进行清洁，适合重点区域的精准扫拖。 88. *",
+      "latency_ms": 870.3
+    }
+  ],
+  "llm": []
+}

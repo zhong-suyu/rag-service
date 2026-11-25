@@ -65,6 +65,7 @@ def build_all():
     # 加载提示词
     prompt_loader = PromptLoader(prompts_cfg)
     summarize_prompt = prompt_loader.get("rag_summarize_prompt_path")
+    cited_prompt = prompt_loader.get("rag_summarize_cited_prompt_path")
     main_prompt = prompt_loader.get("main_prompt_path")
     report_prompt = prompt_loader.get("report_prompt_path")
 
@@ -73,6 +74,10 @@ def build_all():
         model=model,
         summarize_prompt=summarize_prompt,
         k=chroma_cfg["k"],
+        retrieval_mode=chroma_cfg.get("retrieval_mode", "vector"),
+        candidate_k=chroma_cfg.get("hybrid_candidate_k", 10),
+        rrf_k=chroma_cfg.get("rrf_k", 60),
+        cited_prompt=cited_prompt,
     )
 
 
