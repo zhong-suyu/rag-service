@@ -4,7 +4,7 @@
 
 **技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · jieba + rank_bm25 · DashScope（qwen + text-embedding-v4）· Uvicorn
 
-**效果**：自建 24 题评估集（20 正 / 4 负），混合检索 hit@3 **95%**（纯向量 75%），MRR 0.892，详见 [`eval/report.md`](eval/report.md)。
+**效果**：自建 80 题评估集（68 正 / 12 负），混合检索 hit@3 **约 87%**（纯向量约 68%），MRR 0.725，详见 [`eval/report.md`](eval/report.md)。
 
 
 
@@ -84,7 +84,9 @@ rag_service/
 ├── embedding/
 │   └── embeddings.py       # build_embedding_model（DashScope）
 ├── eval/                   # 检索效果评估（离线，不依赖服务）
-│   ├── questions.json      # 24 条评估样本（20 正 + 4 负）
+│   ├── questions.json      # 80 条评估样本（68 正 + 12 负）
+│   ├── check_questions.py  # 题库自检（关键词存在性 + 区分度），输出核对表
+│   ├── questions_review.md # 自检生成的核对表
 │   ├── run_eval.py         # hit@k / MRR / 来源命中 / 耗时，支持 --mode vector|hybrid
 │   └── report.md           # 评估报告（对比两种检索策略）
 ├── prompts/                # main_prompt.txt / rag_summarize.txt / rag_summarize_cited.txt / report_prompt.txt
@@ -215,23 +217,26 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 ## 效果验证
 
-自建 24 题评估集（选购 / 维护 / 故障 / 使用四类，含 4 条库里没有答案的负样本），
+自建 80 题评估集（选购 / 维护 / 故障 / 使用 / 技术五类，含 12 条库里没有答案的负样本），
 对 `chroma_db` 里的真实索引跑 top-3 检索，命中标准 = 返回的块里至少含答案关键词。
+题库本身先过一遍自检（关键词必须真实存在于库中，且命中块数 ≤ 8 以防用泛词凑分）。
 
 ```
-.venv\Scripts\python.exe eval\run_eval.py --mode vector   # 基线
-.venv\Scripts\python.exe eval\run_eval.py --mode hybrid   # 混合检索
+.venv\Scripts\python.exe eval\check_questions.py        # 题库自检，生成核对表
+.venv\Scripts\python.exe eval\run_eval.py --mode vector  # 基线
+.venv\Scripts\python.exe eval\run_eval.py --mode hybrid  # 混合检索
 ```
 
 | 指标 | 仅向量 | 混合检索 |
 | --- | --- | --- |
-| hit@3 | 75.0% | **95.0%** |
-| MRR | 0.667 | **0.892** |
-| 来源命中率 | 90.0% | **100.0%** |
-| 平均检索耗时 | 263 ms | 342 ms（含首次建 BM25 索引） |
+| hit@3 | 67.6% (46/68) | **86.8% (59/68)** |
+| MRR | 0.549 | **0.725** |
+| 来源命中率 | 89.7% | **95.6%** |
+| 平均检索耗时 | 235 ms | 218 ms |
 
-提升主要来自参数类问题：`地毯场景需≥4000Pa`、`集尘袋容量≥2.5L`、`充电座前方3米` 这类
-数字+单位的答案，纯向量召不回，BM25 词面命中能抓到。完整分析和剩余漏召见 [`eval/report.md`](eval/report.md)。
+68 道正样本下 95% 置信区间约 ±8pp，所以对外说"约 87%"而非精确值。
+提升主要来自参数类问题：`地毯场景需≥4000Pa`、`集尘袋容量≥2.5L`、`充电座前方3米`、`电机功率≥300W`
+这类数字+单位的答案，纯向量召不回，BM25 词面命中能抓到。完整分析、剩余漏召与未采用方案见 [`eval/report.md`](eval/report.md)。
 
 ***
 

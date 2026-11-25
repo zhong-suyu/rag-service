@@ -23,7 +23,10 @@ logger = get_logger(__name__)
 
 
 def tokenize(text: str) -> List[str]:
-    """中文分词 + 转小写。jieba 会把 "3000Pa" 切成 3000 / pa，两边同样切法即可对齐。"""
+    """
+        中文分词 + 转小写。jieba 会把 "3000Pa" 切成 3000 / pa，两边同样切法即可对齐。
+        把任意中文文本变成词列表。建索引和查询共用这一个函数，保证两边切法一致
+    """
     return [t.lower() for t in jieba.lcut(text) if t.strip()]
 
 
@@ -38,14 +41,18 @@ class HybridRetriever:
     """
 
     def __init__(self, store, k: int = 3, candidate_k: int = 10, rrf_k: int = 60):
-        self.store = store
-        self.k = k
-        self.candidate_k = candidate_k
-        self.rrf_k = rrf_k
+        self.store = store   # ChromaStore 实例
+        self.k = k    # 最终返回条数，和 config 里 k 对齐
+        self.candidate_k = candidate_k    # 每路召回候选数
+        self.rrf_k = rrf_k    # 融合常数
         self._docs: List[Document] = []
         self._bm25: BM25Okapi | None = None
 
-    # ---------- 索引构建（懒加载，只在第一次检索时建一次） ----------
+    # ---------- 懒加载 BM25 索引（懒加载，只在第一次检索时建一次） ----------
+    """
+       内存里同时存了一份文档副本（326×200 字 ≈ 65KB）。
+       规模再上一个量级就得换方案（独立 BM25 索引服务 / 磁盘倒排），这是它的规模边界。
+    """
     def _ensure_index(self) -> None:
         if self._bm25 is not None:
             return
@@ -59,16 +66,35 @@ class HybridRetriever:
         logger.info(f"BM25 index built on {len(self._docs)} chunks")
 
     # ---------- 两路召回 ----------
+    """
+       向量召回：用向量模型召回最相似的文档。
+       缺点：对数字和生僻词不敏感
+    """
     def _vector_hits(self, query: str) -> List[Document]:
         pairs = self.store.vectorstore.similarity_search_with_score(query, k=self.candidate_k)
         return [doc for doc, _score in pairs]
 
+
+    """
+       BM25 关键词检索
+       建索引：326 个块全部过 jieba 分词，得到 326 个词列表，喂给 BM25Okapi → 得到一个内存倒排索引
+       检索：query 同样 jieba 分词，用 BM25 公式给全部 326 块逐块打分，取分数最高的 10 条
+       缺点：只认字面，不认语义
+    """
     def _bm25_hits(self, query: str) -> List[Document]:
         scores = self._bm25.get_scores(tokenize(query))
         order = np.argsort(scores)[::-1][: self.candidate_k]
         return [self._docs[int(i)] for i in order if scores[int(i)] > 0]
 
     # ---------- 融合 ----------
+    """
+        方向和量纲都不同。直接相加等于让 BM25 独占权重；
+        要加就得先归一化（min-max /z-score），而归一化方式本身就是一个新的超参数、也会随数据分布漂移。
+        RRF 绕开这件事：扔掉分数，只用名次。
+        k = 60:
+            60 是文献里的常用默认值，作用是让名次差异变得温和，避免某一路的第 1 名直接垄断。
+            我实测过 1/10/20/30/60，在这 20 题上命中率都是 95%
+    """
     def retrieve(self, query: str) -> List[Document]:
         self._ensure_index()
         fused: dict[str, float] = {}

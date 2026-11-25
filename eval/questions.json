@@ -1,170 +1,89 @@
 [
-  {
-    "id": "q01",
-    "type": "选购",
-    "question": "家用扫地机器人建议选多少 Pa 以上吸力？",
-    "answer_keywords": ["3000Pa"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q02",
-    "type": "选购",
-    "question": "地毯场景需要多大吸力？",
-    "answer_keywords": ["4000Pa"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q03",
-    "type": "选购",
-    "question": "带宠物的家庭优先选哪种避障方式？",
-    "answer_keywords": ["结构光"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q04",
-    "type": "选购",
-    "question": "小户型 80 平米以内续航至少需要多久？",
-    "answer_keywords": ["60分钟"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q05",
-    "type": "选购",
-    "question": "集尘袋容量建议多大才能减少更换频率？",
-    "answer_keywords": ["2.5L"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q06",
-    "type": "选购",
-    "question": "床底高度只有 8cm 时应该选机身高度多少的机型？",
-    "answer_keywords": ["7.5cm"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q07",
-    "type": "选购",
-    "question": "担心拖布发霉有异味，应该优先选什么配置？",
-    "answer_keywords": ["烘干"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q08",
-    "type": "选购",
-    "question": "门槛高 2cm 时应选越障能力多少的机型？",
-    "answer_keywords": ["越障"],
-    "expected_source": "选购指南.txt"
-  },
-  {
-    "id": "q09",
-    "type": "维护",
-    "question": "充电触点多久清洁一次，怎么清洁？",
-    "answer_keywords": ["充电触点", "干布"],
-    "expected_source": "维护保养.txt"
-  },
-  {
-    "id": "q10",
-    "type": "维护",
-    "question": "万向轮转轴多久滴一次润滑油？",
-    "answer_keywords": ["润滑油"],
-    "expected_source": "维护保养.txt"
-  },
-  {
-    "id": "q11",
-    "type": "维护",
-    "question": "清扫机器人时需要断开电源吗？能用水冲洗机身吗？",
-    "answer_keywords": ["断开电源"],
-    "expected_source": "维护保养.txt"
-  },
-  {
-    "id": "q12",
-    "type": "故障",
-    "question": "电池鼓包应该怎么处理？",
-    "answer_keywords": ["鼓包", "更换"],
-    "expected_source": "故障排除.txt"
-  },
-  {
-    "id": "q13",
-    "type": "故障",
-    "question": "吸力明显下降要检查哪些部位？",
-    "answer_keywords": ["滤网", "堵塞"],
-    "expected_source": "故障排除.txt"
-  },
-  {
-    "id": "q14",
-    "type": "故障",
-    "question": "主刷不旋转可能是什么原因？",
-    "answer_keywords": ["电机"],
-    "expected_source": "故障排除.txt"
-  },
-  {
-    "id": "q15",
-    "type": "故障",
-    "question": "机器人连不上 WiFi 时应该先检查什么？",
-    "answer_keywords": ["2.4G"],
-    "expected_source": "故障排除.txt"
-  },
-  {
-    "id": "q16",
-    "type": "使用",
-    "question": "充电座前方需要留出多大空间？",
-    "answer_keywords": ["3米"],
-    "expected_source": "扫地机器人100问2.txt"
-  },
-  {
-    "id": "q17",
-    "type": "使用",
-    "question": "电量低于多少会优先回充？",
-    "answer_keywords": ["20%"],
-    "expected_source": "扫地机器人100问2.txt"
-  },
-  {
-    "id": "q18",
-    "type": "使用",
-    "question": "建图不完整、地图错乱怎么解决？",
-    "answer_keywords": ["反光", "重新建图"],
-    "expected_source": "扫地机器人100问2.txt"
-  },
-  {
-    "id": "q19",
-    "type": "使用",
-    "question": "扫拖一体机器人可以只拖地不扫地吗？",
-    "answer_keywords": ["单独开启拖地"],
-    "expected_source": "扫拖一体机器人100问.txt"
-  },
-  {
-    "id": "q20",
-    "type": "使用",
-    "question": "如何设置先扫后拖的清洁流程？",
-    "answer_keywords": ["先扫后拖"],
-    "expected_source": "扫拖一体机器人100问.txt"
-  },
-  {
-    "id": "n01",
-    "type": "负样本",
-    "question": "这款扫地机器人的售价是多少？",
-    "answer_keywords": [],
-    "expect_no_answer": true
-  },
-  {
-    "id": "n02",
-    "type": "负样本",
-    "question": "扫地机器人可以帮忙洗衣服吗？",
-    "answer_keywords": [],
-    "expect_no_answer": true
-  },
-  {
-    "id": "n03",
-    "type": "负样本",
-    "question": "机器人能自动爬楼梯上楼吗？",
-    "answer_keywords": [],
-    "expect_no_answer": true
-  },
-  {
-    "id": "n04",
-    "type": "负样本",
-    "question": "扫地机器人可以给手机充电吗？",
-    "answer_keywords": [],
-    "expect_no_answer": true
-  }
+{"id":"q01","type":"选购","question":"家用扫地机器人建议选多少 Pa 以上吸力？","answer_keywords":["3000Pa"],"expected_source":"选购指南.txt"},
+{"id":"q02","type":"选购","question":"地毯场景需要多大吸力？","answer_keywords":["4000Pa"],"expected_source":"选购指南.txt"},
+{"id":"q03","type":"选购","question":"带宠物的家庭优先选哪种避障方式？","answer_keywords":["结构光"],"expected_source":"选购指南.txt"},
+{"id":"q04","type":"选购","question":"小户型 80 平米以内续航至少需要多久？","answer_keywords":["60分钟"],"expected_source":"选购指南.txt"},
+{"id":"q05","type":"选购","question":"集尘袋容量建议多大才能减少更换频率？","answer_keywords":["2.5L"],"expected_source":"选购指南.txt"},
+{"id":"q06","type":"选购","question":"床底高度只有 8cm 时应该选机身高度多少的机型？","answer_keywords":["7.5cm"],"expected_source":"选购指南.txt"},
+{"id":"q07","type":"选购","question":"担心拖布发霉有异味，应该优先选什么配置？","answer_keywords":["烘干"],"expected_source":"选购指南.txt"},
+{"id":"q08","type":"选购","question":"门槛高 2cm 时应选越障能力多少的机型？","answer_keywords":["越障"],"expected_source":"选购指南.txt"},
+{"id":"q09","type":"维护","question":"充电触点多久清洁一次，怎么清洁？","answer_keywords":["金属触点"],"expected_source":"维护保养.txt"},
+{"id":"q10","type":"维护","question":"万向轮转轴多久滴一次润滑油？","answer_keywords":["1-2滴"],"expected_source":"维护保养.txt"},
+{"id":"q11","type":"维护","question":"清扫机器人时需要断开电源吗？能用水冲洗机身吗？","answer_keywords":["断开电源"],"expected_source":"维护保养.txt"},
+{"id":"q12","type":"故障","question":"电池鼓包应该怎么处理？","answer_keywords":["鼓包则立即更换"],"expected_source":"故障排除.txt"},
+{"id":"q13","type":"故障","question":"吸力明显下降要检查哪些部位？","answer_keywords":["风道是否堵塞"],"expected_source":"故障排除.txt"},
+{"id":"q14","type":"故障","question":"主刷不旋转可能是什么原因？","answer_keywords":["主刷电机"],"expected_source":"故障排除.txt"},
+{"id":"q15","type":"故障","question":"机器人连不上 WiFi 时应该先检查什么？","answer_keywords":["2.4G"],"expected_source":"故障排除.txt"},
+{"id":"q16","type":"使用","question":"充电座前方需要留出多大空间？","answer_keywords":["3米"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q17","type":"使用","question":"电量低于多少会优先回充？","answer_keywords":["20%"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q18","type":"使用","question":"建图不完整、地图错乱怎么解决？","answer_keywords":["镜面"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q19","type":"使用","question":"扫拖一体机器人可以只拖地不扫地吗？","answer_keywords":["单独开启拖地"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q20","type":"使用","question":"如何设置先扫后拖的清洁流程？","answer_keywords":["先扫后拖"],"expected_source":"扫拖一体机器人100问.txt"},
+
+{"id":"q21","type":"选购","question":"售后政策上建议整机保修多少年、核心部件保修多少年？","answer_keywords":["保修≥2年"],"expected_source":"选购指南.txt"},
+{"id":"q22","type":"选购","question":"出水量调节至少要分几档？","answer_keywords":["3档"],"expected_source":"选购指南.txt"},
+{"id":"q23","type":"选购","question":"支持自定义区域清扫的机型，最小能清扫多大面积？","answer_keywords":["1㎡"],"expected_source":"选购指南.txt"},
+{"id":"q24","type":"选购","question":"吸尘电机功率建议多少瓦以上？","answer_keywords":["300W"],"expected_source":"选购指南.txt"},
+{"id":"q25","type":"选购","question":"HEPA 滤网建议选什么材质？","answer_keywords":["玻璃纤维"],"expected_source":"选购指南.txt"},
+{"id":"q26","type":"选购","question":"避障传感器数量建议不少于多少组？","answer_keywords":["6组"],"expected_source":"选购指南.txt"},
+{"id":"q27","type":"选购","question":"优质电池的循环寿命建议达到多少次？","answer_keywords":["800次"],"expected_source":"选购指南.txt"},
+{"id":"q28","type":"选购","question":"充电座的防水等级建议达到多少？","answer_keywords":["IPX3"],"expected_source":"选购指南.txt"},
+
+{"id":"q29","type":"维护","question":"机器人应避免在多少度以上的高温环境长时间工作？","answer_keywords":["40℃"],"expected_source":"维护保养.txt"},
+{"id":"q30","type":"维护","question":"水箱密封圈多久需要更换一次？","answer_keywords":["6-12个月"],"expected_source":"维护保养.txt"},
+{"id":"q31","type":"维护","question":"一次性拖布可以重复使用吗？","answer_keywords":["单次使用"],"expected_source":"维护保养.txt"},
+{"id":"q32","type":"维护","question":"集尘座的滤网多久清理一次、多久更换一次？","answer_keywords":["集尘座滤网"],"expected_source":"维护保养.txt"},
+{"id":"q33","type":"维护","question":"机器人长期存放后重新使用前，地图要怎么处理？","answer_keywords":["删除旧地图"],"expected_source":"维护保养.txt"},
+{"id":"q34","type":"维护","question":"长期存放前电池应充到多少电量？","answer_keywords":["80%-90%"],"expected_source":"维护保养.txt"},
+{"id":"q35","type":"维护","question":"存放时机身摆放有什么要求？","answer_keywords":["平放"],"expected_source":"维护保养.txt"},
+{"id":"q36","type":"维护","question":"厨房重油污环境下清洗拖布建议用什么？","answer_keywords":["中性洗涤剂"],"expected_source":"维护保养.txt"},
+{"id":"q37","type":"维护","question":"自动洗拖布机型的清洁仓水位传感器多久清理一次？","answer_keywords":["水位传感器"],"expected_source":"维护保养.txt"},
+
+{"id":"q38","type":"故障","question":"电池续航衰减到什么程度需要更换原装电池？","answer_keywords":["50%"],"expected_source":"故障排除.txt"},
+{"id":"q39","type":"故障","question":"自动洗拖布功能失效时，除了污水仓还要检查哪里是否有水？","answer_keywords":["清洁仓是否有水"],"expected_source":"故障排除.txt"},
+{"id":"q40","type":"故障","question":"拖地后地面有明显水痕，修复时要怎么做？","answer_keywords":["降低清扫速度"],"expected_source":"故障排除.txt"},
+{"id":"q41","type":"故障","question":"主刷旋转时发出咔咔异响，要检查滚刷的哪个部件是否卡顿？","answer_keywords":["轴承"],"expected_source":"故障排除.txt"},
+{"id":"q42","type":"故障","question":"机器人工作时突然偏离清扫路线，地面上的什么会造成干扰？","answer_keywords":["遮挡反光区域"],"expected_source":"故障排除.txt"},
+{"id":"q43","type":"故障","question":"拖地时出水量忽大忽小，要对哪个管路做什么处理？","answer_keywords":["疏通出水管"],"expected_source":"故障排除.txt"},
+{"id":"q44","type":"故障","question":"水箱里的清洁液变质产生异味怎么处理？","answer_keywords":["彻底清洗水箱"],"expected_source":"故障排除.txt"},
+{"id":"q45","type":"故障","question":"地面残留猫砂、狗砂清不干净，应该开启什么模式？","answer_keywords":["宠物模式"],"expected_source":"故障排除.txt"},
+{"id":"q46","type":"故障","question":"集尘电机工作噪音过大可能是什么堵塞了？","answer_keywords":["噪音过大"],"expected_source":"故障排除.txt"},
+{"id":"q47","type":"故障","question":"机器人在什么光照条件下工作会导致建图错乱？","answer_keywords":["阳光直射"],"expected_source":"故障排除.txt"},
+
+{"id":"q48","type":"使用","question":"普通家庭的主刷一般多久更换一次？","answer_keywords":["普通主刷"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q49","type":"使用","question":"普通家庭的尘盒多久清理一次？","answer_keywords":["2-3天"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q50","type":"使用","question":"自动集尘款的集尘袋普通家庭多久更换一次？","answer_keywords":["1-2个月"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q51","type":"使用","question":"床底、沙发底高度足够时，应该开启什么模式清扫？","answer_keywords":["深度清扫"],"expected_source":"扫地机器人100问2.txt"},
+{"id":"q52","type":"使用","question":"机器人电池的保修期一般是多久？","answer_keywords":["电池保修6个月"],"expected_source":"扫地机器人100问2.txt"},
+
+{"id":"q53","type":"使用","question":"为避免地毯边缘留下水渍，机器人一般在距离地毯多少处停止拖地？","answer_keywords":["10cm"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q54","type":"使用","question":"扫拖一体机的水箱密封圈老化开裂怎么办？","answer_keywords":["密封圈属于易损件"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q55","type":"使用","question":"南方回南天用机器人拖地建议用哪种模式？","answer_keywords":["回南天"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q56","type":"使用","question":"有婴儿的家庭拖地时对清洁剂有什么要求？","answer_keywords":["仅用清水"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q57","type":"使用","question":"自动洗拖布机型的污水仓满溢提醒出现后要做什么？","answer_keywords":["污水仓满溢提醒"],"expected_source":"扫拖一体机器人100问.txt"},
+{"id":"q58","type":"使用","question":"拖布支架的卡扣断裂后可以修复吗？","answer_keywords":["无法修复"],"expected_source":"扫拖一体机器人100问.txt"},
+
+{"id":"q59","type":"技术","question":"dToF 导航的探测距离可以达到多少？","answer_keywords":["10米"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q60","type":"技术","question":"HEPA 滤网可以过滤多大尺寸的颗粒？","answer_keywords":["0.3μm"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q61","type":"技术","question":"高端机型的最大越障高度可以达到多少？","answer_keywords":["2.5cm"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q62","type":"技术","question":"震动拖地技术每分钟震动多少次？","answer_keywords":["3000次"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q63","type":"技术","question":"哪种水箱可以精准控制出水量？","answer_keywords":["电控水箱"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q64","type":"选购","question":"大户型选购时建议电池容量大于多少？","answer_keywords":["5200mAh"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q65","type":"技术","question":"物理虚拟墙使用的是什么？","answer_keywords":["磁条"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q66","type":"技术","question":"防止机器人跌落楼梯需要确保哪个传感器清洁？","answer_keywords":["悬崖传感器"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q67","type":"维护","question":"尘盒可以水洗吗？需要注意什么？","answer_keywords":["完全晾干"],"expected_source":"扫地机器人100问.pdf"},
+{"id":"q68","type":"技术","question":"3D 结构光避障是通过什么方式测量距离和形状的？","answer_keywords":["红外点阵"],"expected_source":"扫地机器人100问.pdf"},
+
+{"id":"n01","type":"负样本","question":"这款扫地机器人的售价是多少？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n02","type":"负样本","question":"扫地机器人可以帮忙洗衣服吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n03","type":"负样本","question":"机器人能自动爬楼梯上楼吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n04","type":"负样本","question":"扫地机器人可以给手机充电吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n05","type":"负样本","question":"机器人可以给孩子讲睡前故事吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n06","type":"负样本","question":"扫地机器人的电池是什么品牌的？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n07","type":"负样本","question":"机器人能帮忙遛狗吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n08","type":"负样本","question":"这台机器人能用来擦窗户吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n09","type":"负样本","question":"扫地机器人支持人脸识别解锁吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n10","type":"负样本","question":"这款机器人是在哪个工厂生产的？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n11","type":"负样本","question":"扫地机器人可以烘焙蛋糕吗？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n12","type":"负样本","question":"机器人有几档氛围灯颜色？","answer_keywords":[],"expect_no_answer":true}
 ]
