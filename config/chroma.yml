@@ -11,6 +11,11 @@ md5_hex_store: md5.text
 allow_knowledge_file_types: ['pdf', 'txt']
 
 
+# 切分策略：structural 条目对齐+打包（默认）；fixed 按字符数硬切
+chunk_strategy: structural
+chunk_target_size: 300   # structural 模式下每块的目标长度
+
+# fixed 模式的参数（仅在 chunk_strategy=fixed 时生效）
 chunk_size: 200
 chunk_overlap: 20
 separators: ["\n\n", "\n", "，", ",", ".","。", "！", "？","!","?"," ",""]

@@ -4,7 +4,7 @@
 
 **技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · jieba + rank_bm25 · DashScope（qwen + text-embedding-v4）· Uvicorn
 
-**效果**：自建 80 题评估集（68 正 / 12 负），混合检索 hit@3 **约 87%**（纯向量约 68%），MRR 0.725，详见 [`eval/report.md`](eval/report.md)。
+**效果**：自建 80 题评估集（68 正 / 12 负），混合检索 hit@3 **约 91%**（纯向量约 77%），MRR 0.797，详见 [`eval/report.md`](eval/report.md)。
 
 
 
@@ -39,7 +39,7 @@
 data/*.pdf|txt
    │
    ├─ DocumentLoader   读取 → 13 个 Document（PDF 按页拆）
-   ├─ Chunker          切分 → 326 个 chunk（chunk_size=200, overlap=20）
+   ├─ Chunker          按编号条目切分 + 打包 → 194 个 chunk（每条规则不被腰斩）
    ├─ ChromaStore      按 chunk MD5 去重（已入库的跳过）
    └─ Embedding        DashScope 向量化 → chroma_db/，MD5 记入 md5.text
 ```
@@ -71,7 +71,8 @@ rag_service/
 ├── api/
 │   └── server.py           # FastAPI：/health、/chat、/chat/stream
 ├── chunker/
-│   └── text_splitter.py    # build_splitter / split_documents
+│   ├── text_splitter.py       # build_splitter / split_documents（字符硬切，fixed 模式）
+│   └── structural_splitter.py # 条目对齐切分 + 打包（structural 模式，默认）
 ├── config/
 │   ├── __init__.py         # BASE_DIR
 │   ├── rag.yml             # 模型相关
@@ -229,12 +230,15 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 | 指标 | 仅向量 | 混合检索 |
 | --- | --- | --- |
-| hit@3 | 67.6% (46/68) | **86.8% (59/68)** |
-| MRR | 0.549 | **0.725** |
-| 来源命中率 | 89.7% | **95.6%** |
-| 平均检索耗时 | 235 ms | 218 ms |
+| hit@3 | 76.5% (52/68) | **91.2% (62/68)** |
+| MRR | 0.600 | **0.797** |
+| 来源命中率 | 92.6% | **97.1%** |
 
-68 道正样本下 95% 置信区间约 ±8pp，所以对外说"约 87%"而非精确值。
+另做过一组切分对照：字符硬切（326 块 / 161 字）→ 条目对齐打包（194 块 / 265 字），
+混合检索 hit@3 由 86.8% 提升到 91.2%，MRR 由 0.725 到 0.797 —— 因为语料是
+`1. 现象：…；检测：…；修复：…` 的结构化规则，硬切会把一条规则腰斩成"现象块"和"修复块"。
+
+68 道正样本下 95% 置信区间约 ±7pp，所以对外说"约 91%"而非精确值。
 提升主要来自参数类问题：`地毯场景需≥4000Pa`、`集尘袋容量≥2.5L`、`充电座前方3米`、`电机功率≥300W`
 这类数字+单位的答案，纯向量召不回，BM25 词面命中能抓到。完整分析、剩余漏召与未采用方案见 [`eval/report.md`](eval/report.md)。
 
@@ -265,7 +269,9 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 | `md5_hex_store`                               | 去重清单文件路径；删除该键则关闭去重、每次全量入库 |
 | `data_path`                                   | 知识库目录                     |
 | `allow_knowledge_file_types`                  | 参与建库的文件后缀                 |
-| `chunk_size` / `chunk_overlap` / `separators` | 切分参数（唯一来源，代码内不再有默认值）      |
+| `chunk_strategy` | `structural` 条目对齐打包（默认）；`fixed` 字符硬切 |
+| `chunk_target_size` | structural 模式下每块目标长度（默认 300） |
+| `chunk_size` / `chunk_overlap` / `separators` | fixed 模式的切分参数（唯一来源，代码内不再有默认值） |
 | `k`                                           | 检索召回条数                    |
 | `retrieval_mode`                              | `vector` 仅向量；`hybrid` 向量 + BM25 融合（默认） |
 | `hybrid_candidate_k`                          | 每路各召回多少条候选再融合             |
@@ -323,7 +329,9 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 * **答案可溯源**：`invoke_with_sources` 在参考资料前加 `[编号]` 与来源文件名，提示词要求每条结论标注编号，返回体同时给出 `sources` 列表（文件名 + 片段）。
 
-* **不做距离阈值拒答**：实测负样本 top1 距离（0.53\~0.69）与命中题（最高 0.88）区间重叠，绝对距离分不清相关与否，改由提示词约束「资料中没有就说明未提及」。
+* **不做距离阈值拒答**：实测负样本 top1 距离（0.52\~0.82）与命中题（最高 1.15）区间重叠，绝对距离分不清相关与否，改由提示词约束「资料中没有就说明未提及」。
+
+* **条目对齐切分**：语料是编号规则（`1. 现象…；检测…；修复…`），字符硬切会把一条规则拆成"现象块"和"修复块"，问"怎么处理"时召回现象块、丢掉答案块。改为按条目边界切、相邻条目打包到 300 字，块数 326→194，hit@3 +4.4pp。
 
 
 
@@ -405,3 +413,5 @@ Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结�
 * **混合检索**：新增 `retrieval/hybrid_retriever.py`，向量 + BM25 双路召回归一化融合，`config/chroma.yml` 用 `retrieval_mode` 切换；hit@3 由 75% 提升到 95%。
 
 * **出处标注**：新增 `prompts/rag_summarize_cited.txt` 与 `RagSummarizeService.invoke_with_sources`，答案带 `[编号]`，同时返回来源文件名与片段。
+
+* **条目对齐切分**：新增 `chunker/structural_splitter.py`，`chunk_strategy: structural|fixed` 可切换；默认 structural（194 块），旧 fixed（326 块）保留作对照。

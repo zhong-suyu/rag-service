@@ -13,6 +13,7 @@ from utils.config_handler import load_config
 from utils.prompt_loader import PromptLoader
 from document_loader.loader import DocumentLoader
 from chunker.text_splitter import build_splitter, split_documents
+from chunker.structural_splitter import split_documents_structural
 from embedding.embeddings import build_embedding_model
 from vector_store.chroma_store import ChromaStore
 from rag_summarize.rag_summarize import RagSummarizeService
@@ -34,12 +35,20 @@ def _init_vectorstore(chroma_cfg: dict, llm_cfg: dict) -> ChromaStore:
         allowed_types=chroma_cfg["allow_knowledge_file_types"],
     )
     docs = loader.load_all()
-    splitter = build_splitter(
-        chunk_size=chroma_cfg["chunk_size"],
-        chunk_overlap=chroma_cfg["chunk_overlap"],
-        separators=chroma_cfg["separators"],
-    )
-    chunks = split_documents(docs, splitter)
+
+    # 切分策略来自配置：structural 按条目边界打包，fixed 按字符硬切
+    if chroma_cfg.get("chunk_strategy", "structural") == "structural":
+        chunks = split_documents_structural(
+            docs, target_size=chroma_cfg.get("chunk_target_size", 300)
+        )
+    else:
+        splitter = build_splitter(
+            chunk_size=chroma_cfg["chunk_size"],
+            chunk_overlap=chroma_cfg["chunk_overlap"],
+            separators=chroma_cfg["separators"],
+        )
+        chunks = split_documents(docs, splitter)
+
     store.add_documents(chunks)
     return store
 

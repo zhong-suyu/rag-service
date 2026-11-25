@@ -14,7 +14,9 @@ __pycache__/
 # 运行时产物（可自动重建）
 logs/
 chroma_db/
+chroma_db*/
 md5.text
+md5.text*
 *.log
 
 # IDE
