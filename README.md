@@ -112,7 +112,7 @@ rag_service/
 
 ## 快速开始
 
-### 方式一：Docker（推荐，不用装 Python 环境）
+### Docker 启动（推荐，不用装 Python 环境）
 
 ```bash
 git clone https://github.com/zhong-suyu/rag-service.git
@@ -137,7 +137,7 @@ docker compose down                # 停掉并删容器
 
 国内若拉不到基础镜像，先把 `python:3.13-slim` 从镜像站拉下来并 `docker tag` 成原名，再 build。
 
-### 方式二：本地 Python 环境
+### 本地 Python 启动（开发调试用）
 
 #### 1. 环境
 
