@@ -74,7 +74,7 @@
 {"id":"q67","type":"维护","question":"尘盒可以水洗吗？需要注意什么？","answer_keywords":["完全晾干"],"expected_source":"扫地机器人100问.pdf"},
 {"id":"q68","type":"技术","question":"3D 结构光避障是通过什么方式测量距离和形状的？","answer_keywords":["红外点阵"],"expected_source":"扫地机器人100问.pdf"},
 
-{"id":"n01","type":"负样本","question":"这款扫地机器人的售价是多少？","answer_keywords":[],"expect_no_answer":true},
+{"id":"n01","type":"负样本","question":"这款机器有以旧换新补贴吗？","answer_keywords":[],"expect_no_answer":true},
 {"id":"n02","type":"负样本","question":"扫地机器人可以帮忙洗衣服吗？","answer_keywords":[],"expect_no_answer":true},
 {"id":"n03","type":"负样本","question":"机器人能自动爬楼梯上楼吗？","answer_keywords":[],"expect_no_answer":true},
 {"id":"n04","type":"负样本","question":"扫地机器人可以给手机充电吗？","answer_keywords":[],"expect_no_answer":true},
