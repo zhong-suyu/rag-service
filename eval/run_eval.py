@@ -65,28 +65,55 @@ def _build_store() -> ChromaStore:
     )
 
 
-def _make_searcher(store: ChromaStore, mode: str, k: int) -> Callable:
-    """返回 search(query) -> [(Document, score or None)]，两种模式统一签名。"""
-    if mode == "hybrid":
+def _make_searcher(
+    store: ChromaStore,
+    mode: str,
+    k: int,
+    rerank_model: str = "qwen3.7-text-rerank",
+    rerank_candidate_k: int = 10,
+) -> Callable:
+    """返回 search(query) -> [(Document, score or None)]，各模式统一签名。
+
+    mode:
+        vector         纯向量
+        hybrid         向量 + BM25 + RRF
+        vector_rerank  向量多捞 rerank_candidate_k 条 → 精排取 k
+        hybrid_rerank  混合检索多捞 rerank_candidate_k 条 → 精排取 k
+    """
+    do_rerank = mode.endswith("_rerank")
+    base_mode = mode[: -len("_rerank")] if do_rerank else mode
+    depth = rerank_candidate_k if do_rerank else k
+    chroma_cfg = load_config("chroma")
+
+    if base_mode == "hybrid":
         from retrieval.hybrid_retriever import HybridRetriever
 
-        chroma_cfg = load_config("chroma")
         retriever = HybridRetriever(
             store,
-            k=k,
+            k=depth,
             candidate_k=chroma_cfg.get("hybrid_candidate_k", 10),
             rrf_k=chroma_cfg.get("rrf_k", 60),
         )
+        base_search = retriever.retrieve
+    else:
+        base_search = lambda q: [  # noqa: E731
+            doc for doc, _score in store.vectorstore.similarity_search_with_score(q, k=depth)
+        ]
 
-        def search(query: str):
-            return [(doc, None) for doc in retriever.retrieve(query)]
+    if not do_rerank:
+        if base_mode == "hybrid":
+            return lambda q: [(doc, None) for doc in base_search(q)]  # noqa: E731
+        return lambda q: store.vectorstore.similarity_search_with_score(q, k=k)  # noqa: E731
 
-        return search
+    from retrieval.reranker import DashScopeReranker
 
-    def search_vector(query: str):
-        return store.vectorstore.similarity_search_with_score(query, k=k)
+    reranker = DashScopeReranker(model=rerank_model, top_n=k)
 
-    return search_vector
+    def search_rerank(query: str):
+        return reranker.rerank(query, base_search(query))
+
+    search_rerank.reranker = reranker  # 供汇总 token 消耗
+    return search_rerank
 
 
 def _evaluate_one(search: Callable, item: dict) -> dict:
@@ -137,11 +164,16 @@ def _run_llm_check(store: ChromaStore, items: list[dict], k: int, mode: str) -> 
     """可选：调用真实生成链路，检查答案是否含关键词、是否引用了来源。"""
     from langchain_openai import ChatOpenAI
     from rag_summarize.rag_summarize import RagSummarizeService
+    from retrieval.reranker import DashScopeReranker
     from utils.prompt_loader import PromptLoader
 
     rag_cfg = load_config("rag")
     chroma_cfg = load_config("chroma")
     prompt_loader = PromptLoader(load_config("prompts"))
+
+    # mode 可能是 hybrid_rerank，这里拆成"基础检索模式 + 是否精排"
+    base_mode = "hybrid" if "hybrid" in mode else "vector"
+    do_rerank = mode.endswith("_rerank")
 
     model = ChatOpenAI(
         model=rag_cfg["chat_model"],
@@ -153,10 +185,17 @@ def _run_llm_check(store: ChromaStore, items: list[dict], k: int, mode: str) -> 
         model=model,
         summarize_prompt=prompt_loader.get("rag_summarize_prompt_path"),
         k=k,
-        retrieval_mode=mode,
+        retrieval_mode=base_mode,
         candidate_k=chroma_cfg.get("hybrid_candidate_k", 10),
         rrf_k=chroma_cfg.get("rrf_k", 60),
         cited_prompt=prompt_loader.get("rag_summarize_cited_prompt_path"),
+        rerank_enabled=do_rerank,
+        reranker=(
+            DashScopeReranker(model=chroma_cfg.get("rerank_model", "qwen3.7-text-rerank"), top_n=k)
+            if do_rerank
+            else None
+        ),
+        rerank_candidate_k=chroma_cfg.get("rerank_candidate_k", 10),
     )
 
     results = []
@@ -184,6 +223,8 @@ def _run_llm_check(store: ChromaStore, items: list[dict], k: int, mode: str) -> 
 
 def _write_report(summary: dict, rows: list[dict], llm_rows: list[dict], items: list[dict]) -> str:
     k = summary["k"]
+    score_kind = summary.get("score_kind", "distance")
+    score_col = "top1 精排分" if score_kind == "rerank" else "top1 距离"
     lines = []
     lines.append("# 检索效果评估报告\n")
     lines.append(f"- 检索模式：`{summary['mode']}`（top-k={k}）")
@@ -201,7 +242,7 @@ def _write_report(summary: dict, rows: list[dict], llm_rows: list[dict], items: 
     lines.append(f"| P95 检索耗时 | {summary['latency_p95']:.1f} ms | 慢尾延迟 |")
 
     lines.append("\n## 明细\n")
-    lines.append("| 编号 | 类型 | 问题 | 命中 | 首次命中排名 | 来源命中 | top1 距离 | 耗时(ms) |")
+    lines.append(f"| 编号 | 类型 | 问题 | 命中 | 首次命中排名 | 来源命中 | {score_col} | 耗时(ms) |")
     lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for r in rows:
         dist = "—" if r["top1_score"] is None else f"{r['top1_score']:.3f}"
@@ -213,6 +254,16 @@ def _write_report(summary: dict, rows: list[dict], llm_rows: list[dict], items: 
                 f"| {r['id']} | {r['type']} | {r['question']} | {mark} | {r['first_rank'] or '—'} "
                 f"| {'✅' if r['source_hit'] else '❌'} | {dist} | {r['latency_ms']:.1f} |"
             )
+
+    if summary.get("rerank"):
+        rr = summary["rerank"]
+        lines.append("\n## 精排消耗\n")
+        lines.append("| 项 | 数值 |")
+        lines.append("| --- | --- |")
+        lines.append(f"| 模型 | `{rr['model']}` |")
+        lines.append(f"| 排序候选数 | {rr['candidate_k']} |")
+        lines.append(f"| 成功调用 / 失败 | {rr['calls']} / {rr['failures']} |")
+        lines.append(f"| 累计 token | {rr['total_tokens']} |")
 
     missed = [r for r in rows if not r["is_negative"] and not r["hit"]]
     if missed:
@@ -247,10 +298,15 @@ def _write_report(summary: dict, rows: list[dict], llm_rows: list[dict], items: 
 def main() -> int:
     parser = argparse.ArgumentParser(description="RAG 检索效果评估")
     parser.add_argument("--k", type=int, default=3, help="检索 top-k，默认 3（与 config/chroma.yml 的 k 一致）")
-    parser.add_argument("--mode", choices=["vector", "hybrid"], default=None,
+    parser.add_argument("--mode", choices=["vector", "hybrid", "vector_rerank", "hybrid_rerank"],
+                        default=None,
                         help="检索模式，不传则读 config/chroma.yml 的 retrieval_mode")
     parser.add_argument("--questions", default=os.path.join("eval", "questions.json"))
     parser.add_argument("--with-llm", action="store_true", help="额外评估生成答案质量（慢）")
+    parser.add_argument("--rerank-model", default="qwen3.7-text-rerank",
+                        help="精排模型：qwen3.7-text-rerank / qwen3-rerank / qwen3-vl-rerank")
+    parser.add_argument("--rerank-candidate-k", type=int, default=10,
+                        help="交给精排的候选条数（默认 10）")
     args = parser.parse_args()
 
     setup_logger()
@@ -265,7 +321,11 @@ def main() -> int:
 
     print(f"加载 {len(items)} 条评估样本，模式 = {mode}，打开向量库...")
     store = _build_store()
-    search = _make_searcher(store, mode, args.k)
+    search = _make_searcher(
+        store, mode, args.k,
+        rerank_model=args.rerank_model,
+        rerank_candidate_k=args.rerank_candidate_k,
+    )
 
     rows = []
     for item in items:
@@ -284,6 +344,7 @@ def main() -> int:
     mrr = statistics.mean([r["mrr"] for r in positives]) if positives else 0.0
     latencies = [r["latency_ms"] for r in rows]
 
+    reranker = getattr(search, "reranker", None)
     summary = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "mode": mode,
@@ -296,6 +357,19 @@ def main() -> int:
         "source_rate": source_rate,
         "latency_mean": statistics.mean(latencies) if latencies else 0.0,
         "latency_p95": _percentile(latencies, 0.95),
+        # 分数语义不同：向量/混合是 L2 距离（越小越好），精排是相关性分（0~1，越大越好）
+        "score_kind": "rerank" if reranker else "distance",
+        "rerank": (
+            {
+                "model": reranker.model,
+                "candidate_k": args.rerank_candidate_k,
+                "calls": reranker.calls,
+                "failures": reranker.failures,
+                "total_tokens": reranker.total_tokens,
+            }
+            if reranker
+            else None
+        ),
     }
 
     llm_rows = []
@@ -306,11 +380,16 @@ def main() -> int:
     out_dir = os.path.join(PROJECT_ROOT, "eval")
     os.makedirs(out_dir, exist_ok=True)
 
-    report_path = os.path.join(out_dir, f"report_{mode}.md")
+    # 精排模式下把模型名和候选深度写进文件名，便于多次对照
+    suffix = ""
+    if getattr(search, "reranker", None):
+        suffix = f"_{args.rerank_model.replace('.', '')}_c{args.rerank_candidate_k}"
+
+    report_path = os.path.join(out_dir, f"report_{mode}{suffix}.md")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(_write_report(summary, rows, llm_rows, items))
 
-    json_path = os.path.join(out_dir, f"results_{mode}.json")
+    json_path = os.path.join(out_dir, f"results_{mode}{suffix}.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump({"summary": summary, "rows": rows, "llm": llm_rows}, f, ensure_ascii=False, indent=2)
 

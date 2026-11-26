@@ -6,6 +6,15 @@ k: 3
 retrieval_mode: hybrid
 hybrid_candidate_k: 10   # 每路各召回多少条候选再融合
 rrf_k: 60                # RRF 平滑常数
+
+# 精排（rerank）：召回多捞 candidate 条 → 用排序模型重新打分 → 取 top k
+rerank_enabled: true
+rerank_model: qwen3.7-text-rerank   # 可选 qwen3.7-text-rerank / qwen3-rerank / qwen3-vl-rerank
+rerank_candidate_k: 10   # 交给精排的候选条数（越大越贵，官方建议 20~100）
+# 阈值拒答：top1 精排分低于该值就答"参考资料中未提及"。0 = 关闭（当前关闭）。
+# 实测不可靠：精排分是"本次请求内的相对分"，会随候选池组成漂移
+# （同一题在向量-10 池得 0.885、在混合-10 池得 0.751），无法做跨请求的绝对阈值。
+rerank_reject_threshold: 0.0
 data_path: data
 md5_hex_store: md5.text
 allow_knowledge_file_types: ['pdf', 'txt']

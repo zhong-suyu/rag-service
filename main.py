@@ -17,6 +17,7 @@ from chunker.structural_splitter import split_documents_structural
 from embedding.embeddings import build_embedding_model
 from vector_store.chroma_store import ChromaStore
 from rag_summarize.rag_summarize import RagSummarizeService
+from retrieval.reranker import DashScopeReranker
 from agent.graph import build_agent_graph, run_agent, run_agent_stream
 from api.server import create_app, set_agent_app
 
@@ -87,6 +88,17 @@ def build_all():
         candidate_k=chroma_cfg.get("hybrid_candidate_k", 10),
         rrf_k=chroma_cfg.get("rrf_k", 60),
         cited_prompt=cited_prompt,
+        rerank_enabled=chroma_cfg.get("rerank_enabled", False),
+        reranker=(
+            DashScopeReranker(
+                model=chroma_cfg.get("rerank_model", "qwen3.7-text-rerank"),
+                top_n=chroma_cfg["k"],
+            )
+            if chroma_cfg.get("rerank_enabled", False)
+            else None
+        ),
+        rerank_candidate_k=chroma_cfg.get("rerank_candidate_k", 10),
+        rerank_reject_threshold=chroma_cfg.get("rerank_reject_threshold", 0.0),
     )
 
 

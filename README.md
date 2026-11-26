@@ -4,7 +4,7 @@
 
 **技术栈**：Python 3.13 · FastAPI · LangChain 1.5 · LangGraph · Chroma · jieba + rank_bm25 · DashScope（qwen + text-embedding-v4）· Uvicorn
 
-**效果**：自建 80 题评估集（68 正 / 12 负），混合检索 hit@3 **约 91%**（纯向量约 77%），MRR 0.797，详见 [`eval/report.md`](eval/report.md)。
+**效果**：自建 80 题评估集（68 正 / 12 负），混合检索 + 精排 hit@3 **68/68**（MRR 0.985；仅向量 76.5%），精排前的纯混合检索为 91.2%。详见 [`eval/report.md`](eval/report.md)。
 
 
 
@@ -226,13 +226,17 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 .venv\Scripts\python.exe eval\check_questions.py        # 题库自检，生成核对表
 .venv\Scripts\python.exe eval\run_eval.py --mode vector  # 基线
 .venv\Scripts\python.exe eval\run_eval.py --mode hybrid  # 混合检索
+.venv\Scripts\python.exe eval\run_eval.py --mode hybrid_rerank  # 混合 + 精排
 ```
 
-| 指标 | 仅向量 | 混合检索 |
-| --- | --- | --- |
-| hit@3 | 76.5% (52/68) | **91.2% (62/68)** |
-| MRR | 0.600 | **0.797** |
-| 来源命中率 | 92.6% | **97.1%** |
+| 指标 | 仅向量 | 混合检索 | 混合 + 精排 |
+| --- | --- | --- | --- |
+| hit@3 | 76.5% (52/68) | 91.2% (62/68) | **100% (68/68)** |
+| MRR | 0.600 | 0.797 | **0.985** |
+| 来源命中率 | 92.6% | 97.1% | **100%** |
+| 平均检索耗时 | 229 ms | 237 ms | 1757 ms |
+
+> 100% 是 68 条正样本上的结果，属小样本结论，不能外推成"任何问题都能答对"。
 
 另做过一组切分对照：字符硬切（326 块 / 161 字）→ 条目对齐打包（194 块 / 265 字），
 混合检索 hit@3 由 86.8% 提升到 91.2%，MRR 由 0.725 到 0.797 —— 因为语料是
@@ -327,6 +331,10 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 * **混合检索**：向量一路负责语义相近，BM25 一路负责数字/术语字面命中，用 RRF（`Σ 1/(60+rank)`）融合，不依赖两路分数归一化。
 
+* **两阶段检索（精排）**：混合检索先取 10 条候选，再用 `qwen3.7-text-rerank` 重新打分取 top-3。召回负责"别漏"、精排负责"排得准"，MRR 由 0.797 提到 0.985。候选深度实测 10 优于 20（20 条反而干扰精排且 token 多 68%），延迟代价约 +1.5s。
+
+* **不做分数阈值拒答**：距离阈值（正负样本区间重叠）与精排分阈值（分数是请求内相对分，随候选池漂移，同题可差 0.13）都验证过不可行，`rerank_reject_threshold` 保留配置项但默认 0，仍由提示词约束「资料中没有就说明未提及」兜底。
+
 * **答案可溯源**：`invoke_with_sources` 在参考资料前加 `[编号]` 与来源文件名，提示词要求每条结论标注编号，返回体同时给出 `sources` 列表（文件名 + 片段）。
 
 * **不做距离阈值拒答**：实测负样本 top1 距离（0.52\~0.82）与命中题（最高 1.15）区间重叠，绝对距离分不清相关与否，改由提示词约束「资料中没有就说明未提及」。
@@ -415,3 +423,5 @@ Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结�
 * **出处标注**：新增 `prompts/rag_summarize_cited.txt` 与 `RagSummarizeService.invoke_with_sources`，答案带 `[编号]`，同时返回来源文件名与片段。
 
 * **条目对齐切分**：新增 `chunker/structural_splitter.py`，`chunk_strategy: structural|fixed` 可切换；默认 structural（194 块），旧 fixed（326 块）保留作对照。
+
+* **精排（rerank）**：新增 `retrieval/reranker.py`（百炼文本排序 API），`config/chroma.yml` 增 `rerank_enabled / rerank_model / rerank_candidate_k / rerank_reject_threshold`；`RagSummarizeService` 变成"召回 10 → 精排取 3"。80 题 hit@3 由 91.2% 升至 100%（68/68），MRR 0.797 → 0.985；对照了候选深度 10 vs 20 与两个模型，最终选 `qwen3.7-text-rerank` + 候选 10。阈值拒答实测后仍不启用（分数随候选池漂移）。
