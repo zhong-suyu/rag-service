@@ -135,17 +135,7 @@ docker compose logs -f api         # 看日志
 docker compose down                # 停掉并删容器
 ```
 
-#### 国内网络构建
-
-`registry-1.docker.io` 在国内直连不通，`docker compose build` 会卡在拉基础镜像那一步。先把基础镜像从国内镜像站拉到本地，之后 build 就不用再联网拉它：
-
-```bash
-docker pull docker.m.daocloud.io/library/python:3.13-slim
-docker tag docker.m.daocloud.io/library/python:3.13-slim python:3.13-slim
-docker compose up -d --build
-```
-
-镜像内 `pip install` 已指向清华源（见 Dockerfile），依赖下载不受影响。
+国内若拉不到基础镜像，先把 `python:3.13-slim` 从镜像站拉下来并 `docker tag` 成原名，再 build。
 
 ### 方式二：本地 Python 环境
 
