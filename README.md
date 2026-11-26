@@ -280,6 +280,10 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 | `retrieval_mode`                              | `vector` 仅向量；`hybrid` 向量 + BM25 融合（默认） |
 | `hybrid_candidate_k`                          | 每路各召回多少条候选再融合             |
 | `rrf_k`                                       | RRF 平滑常数，默认 60              |
+| `rerank_enabled` | `true` 开启两阶段检索（召回多捞 → 精排取 top-k） |
+| `rerank_model` | `qwen3.7-text-rerank`（默认，实测优于 `qwen3-rerank`） |
+| `rerank_candidate_k` | 交给精排的候选条数（默认 10，实测优于 20） |
+| `rerank_reject_threshold` | 精排分低于该值就拒答；**默认 0 = 关闭**（分数是请求内相对分，做不了绝对阈值） |
 
 ### `config/prompts.yml`
 
