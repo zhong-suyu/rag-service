@@ -43,7 +43,14 @@ def rag_summarize(query: str, runtime: ToolRuntime) -> str:
             runtime.context["rag_rejected"] = payload.get("rejected", False)
         except Exception as e:  # context 不可写时不影响回答
             logger.warning(f"写入 rag sources 失败: {e}")
-        return payload["answer"]
+        answer = payload["answer"]
+        # 把「编号 → 真实文件名」附在返回值末尾：模型看不到检索上下文，只能靠这里拿到文件名，
+        # 否则它会把文件名自己编造成「导航技术对比资料」这种描述性标签
+        sources = payload.get("sources") or []
+        if sources:
+            refs = "\n".join(f"[{s['index']}] {s['source']}" for s in sources)
+            answer = f"{answer}\n\n参考文件清单（引用时请原样照抄这些文件名）：\n{refs}"
+        return answer
     except Exception as e:
         logger.error(f"rag_summarize error: {e}")
         return f"检索失败: {e}"
