@@ -1,0 +1,26 @@
+# 哪些东西不要拷进镜像（作用同 .gitignore，但只影响 docker build）
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+.git/
+.gitignore
+
+# 密钥：不进镜像，运行时由 compose 的 env_file 注入
+.env
+.env.*
+!.env.example
+
+logs/
+*.log
+chroma_db_fixed200/
+md5.text_fixed200
+eval/replay_result.json
+面试问答.md
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

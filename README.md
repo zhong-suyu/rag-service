@@ -112,7 +112,32 @@ rag_service/
 
 ## 快速开始
 
-### 1. 环境
+### 方式一：Docker（推荐，不用装 Python 环境）
+
+```bash
+git clone https://github.com/zhong-suyu/rag-service.git
+cd rag-service
+cp .env.example .env      # 填入两个 API Key（值相同）
+docker compose up -d --build
+```
+
+打开 `http://localhost:8000/docs` 验证。
+
+- `.env` 不进镜像，由 compose 在运行时注入
+- `chroma_db` 随镜像打包，容器启动即有 194 块（若你 clone 到的仓库里没有 `chroma_db`，首次启动会自动建库，3~5 分钟 + 一次 embedding token）
+- 日志写在宿主机 `logs/`（已挂卷）
+
+常用命令：
+
+```bash
+docker compose ps                  # 看状态（healthy 才算起好）
+docker compose logs -f api         # 看日志
+docker compose down                # 停掉并删容器
+```
+
+### 方式二：本地 Python 环境
+
+#### 1. 环境
 
 
 
@@ -123,7 +148,7 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 2. 配置 API Key
+#### 2. 配置 API Key
 
 对话模型与向量化模型都走阿里云百炼（DashScope），用的是**同一个 key**，但两个客户端读的环境变量名不同，需要都配置：
 
@@ -139,7 +164,7 @@ $env:OPENAI_API_KEY = "sk-xxxx"
 
 说明：`ChatOpenAI` 是 OpenAI SDK 的封装，默认读 `OPENAI_API_KEY`；本项目未显式传 `api_key`，所以要配它，否则对话模型会 401。
 
-### 3. 启动
+#### 3. 启动
 
 
 
@@ -151,9 +176,9 @@ python main.py
 python main.py --mode api --host 0.0.0.0 --port 8000
 ```
 
-启动成功会依次打印：`RAG Agent 服务启动` → 文档加载与切分 → `No new documents to add`（首次会是 `Adding 326 new chunks`）→ `Agent 图构建完成` → `Uvicorn running on ...`。
+启动成功会依次打印：`RAG Agent 服务启动` → 文档加载与切分 → `No new documents to add`（首次会是 `Adding 194 new chunks`）→ `Agent 图构建完成` → `Uvicorn running on ...`。
 
-首次启动会向量化 326 个 chunk（耗时、消耗 token）；之后启动命中 MD5 去重，秒级完成。
+首次启动会向量化 194 个 chunk（耗时、消耗 token）；之后启动命中 MD5 去重，秒级完成。
 
 
 
