@@ -44,22 +44,26 @@ def _last_ai_text(messages) -> str:
     return "无法生成有效回答"
 
 
-def run_agent(app, user_input: str) -> str:
-    """一次性拿到完整回答。"""
+def run_agent(app, user_input: str, ctx: dict | None = None) -> str:
+    """一次性拿到完整回答。ctx 传进来时会原地写入工具回传的 sources。"""
+    context = ctx if ctx is not None else {"report": False}
+    context.setdefault("report", False)
     result = app.invoke(
         {"messages":
              [
                  {"role": "user", "content": user_input}
              ]
         },
-        context={"report": False},
+        context=context,
         config={"recursion_limit": 30},   # 最多 30 步，防止无限循环
     )
     return _last_ai_text(result.get("messages", []))
 
 
-def run_agent_stream(app, user_input: str):
+def run_agent_stream(app, user_input: str, ctx: dict | None = None):
     """流式版：逐块产出模型输出的文本增量（str）。"""
+    context = ctx if ctx is not None else {"report": False}
+    context.setdefault("report", False)
     for chunk, _metadata in app.stream(
         {"messages":
              [
@@ -67,7 +71,7 @@ def run_agent_stream(app, user_input: str):
              ]
         },
         stream_mode="messages",
-        context={"report": False},
+        context=context,
         config={"recursion_limit": 30},
     ):
         # 只留 AI 块，跳过其他消息类型

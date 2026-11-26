@@ -18,6 +18,7 @@ chroma_db*/
 md5.text
 md5.text*
 *.log
+eval/replay_result.json
 
 # IDE
 .idea/

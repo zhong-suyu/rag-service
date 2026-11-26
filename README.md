@@ -69,7 +69,8 @@ rag_service/
 │   ├── middleware.py       # monitor_tool / log_before_model / build_prompt_switch
 │   └── tools.py            # 7 个工具定义
 ├── api/
-│   └── server.py           # FastAPI：/health、/chat、/chat/stream
+│   └── server.py           # FastAPI：/health、/chat、/chat/stream、/feedback、/stats
+├── storage/                # SQLite 调用留痕与反馈（qa_log / feedback）
 ├── chunker/
 │   ├── text_splitter.py       # build_splitter / split_documents（字符硬切，fixed 模式）
 │   └── structural_splitter.py # 条目对齐切分 + 打包（structural 模式，默认）
@@ -180,28 +181,89 @@ python main.py --mode api --host 0.0.0.0 --port 8000
 {"message": "拖布发臭怎么处理？"}
 ```
 
-响应（等待全部工具调用完成后返回，通常 20\~100 秒）：
+响应（等待全部工具调用完成后返回，通常 30\~170 秒，取决于答案长度）：
 
 
 
 ```
-{"reply": "拖布发臭主要来自……"}
+{"reply": "拖布发臭主要来自……", "trace_id": "293a51e866ef", "latency_ms": 169904}
 ```
+
+> `trace_id` 是本次请求的短 ID，用于上报反馈；不是用户标识，不含个人信息。
 
 ### `POST /chat/stream` —— SSE 流式
 
-请求体同上。响应为 `text/event-stream`：
+请求体同上。响应为 `text/event-stream`，**首帧就给 `trace_id`**，方便前端在流结束后上报反馈：
 
 
 
 ```
+data: {"trace_id": "293a51e866ef"}
 data: {"delta": "拖布"}
 data: {"delta": "发臭"}
 ...
+data: {"done": true, "latency_ms": 51234}
 data: [DONE]
 ```
 
 出错时会推送 `data: {"error": "..."}` 后以 `[DONE]` 结束。
+
+### `POST /feedback` —— 点赞 / 点踩
+
+```
+{"trace_id": "293a51e866ef", "rating": -1, "comment": "没给具体机型"}
+```
+
+`rating` 只接受 `1`（好评）或 `-1`（点踩）；`trace_id` 不存在返回 404。返回 `{"ok": true, ...}`。
+
+### `GET /stats` —— 反馈统计
+
+```
+{
+  "total": 12,
+  "feedback_count": 5,
+  "good_rate": 0.8,
+  "reject_rate": 0.167,
+  "avg_latency_ms": 45320.5,
+  "p95_latency_ms": 120341.0,
+  "recent_bad_cases": [{"trace_id": "...", "question": "...", "comment": "..."}]
+}
+```
+
+`good_rate` 的分母是**收到反馈的请求数**（不是总请求数），否则没人点赞时会显示 0%，没有意义。
+
+### 反馈闭环怎么跑
+
+```powershell
+# 1. 问一个问题，拿到 trace_id
+curl.exe -X POST http://127.0.0.1:8000/chat -H "Content-Type: application/json" `
+  -d '{\"message\":\"地毯需要多大吸力\"}'
+
+# 2. 对这次回答点踩（rating=-1）
+curl.exe -X POST http://127.0.0.1:8000/feedback -H "Content-Type: application/json" `
+  -d '{\"trace_id\":\"<上一步的 trace_id>\",\"rating\":-1,\"comment\":\"没给具体机型\"}'
+
+# 3. 看统计
+curl.exe http://127.0.0.1:8000/stats
+```
+
+**没有真实用户怎么办**：`eval/replay_feedback.py` 把评估集回放成线上请求，按规则自动点赞/点踩，跑通 `trace_id → qa_log → feedback → /stats → 归因` 整条链路。
+
+```powershell
+.venv\Scripts\python.exe main.py --mode api --port 8000     # 另开一个窗口
+.venv\Scripts\python.exe eval\replay_feedback.py --limit 4  # 先小批量验证
+```
+
+实测输出（4 题回放 + 1 次手动点踩）：
+
+```
+  [1/4] q01 👍 家用扫地机器人建议选多少 Pa 以上吸力？
+  [2/4] q02 👍 地毯场景需要多大吸力？
+  [3/4] q03 👍 带宠物的家庭优先选哪种避障方式？
+  [4/4] n01 👎 这款扫地机器人的售价是多少？  ← 库外问题却没说明未提及
+```
+
+> 注意：回放产生的反馈属于**模拟数据**，用于验证链路，不能当作用户反馈的统计结论；真实流量接入后只需换数据源，代码不用改。
 
 
 
@@ -339,6 +401,8 @@ curl.exe -N -X POST http://127.0.0.1:8000/chat/stream `
 
 * **不做分数阈值拒答**：距离阈值（正负样本区间重叠）与精排分阈值（分数是请求内相对分，随候选池漂移，同题可差 0.13）都验证过不可行，`rerank_reject_threshold` 保留配置项但默认 0，仍由提示词约束「资料中没有就说明未提及」兜底。
 
+* **反馈闭环**：`trace_id` + SQLite 两张表（`qa_log` / `feedback`）+ `/feedback` + `/stats`。只存 `sources` 不存精排分数——只有会被使用的字段才落库；流式拿不到 token 用量就留空，不编数字。落库失败只记 warning，不影响回答返回。
+
 * **答案可溯源**：`invoke_with_sources` 在参考资料前加 `[编号]` 与来源文件名，提示词要求每条结论标注编号，返回体同时给出 `sources` 列表（文件名 + 片段）。
 
 * **不做距离阈值拒答**：实测负样本 top1 距离（0.52\~0.82）与命中题（最高 1.15）区间重叠，绝对距离分不清相关与否，改由提示词约束「资料中没有就说明未提及」。
@@ -429,3 +493,5 @@ Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结�
 * **条目对齐切分**：新增 `chunker/structural_splitter.py`，`chunk_strategy: structural|fixed` 可切换；默认 structural（194 块），旧 fixed（326 块）保留作对照。
 
 * **精排（rerank）**：新增 `retrieval/reranker.py`（百炼文本排序 API），`config/chroma.yml` 增 `rerank_enabled / rerank_model / rerank_candidate_k / rerank_reject_threshold`；`RagSummarizeService` 变成"召回 10 → 精排取 3"。80 题 hit@3 由 91.2% 升至 100%（68/68），MRR 0.797 → 0.985；对照了候选深度 10 vs 20 与两个模型，最终选 `qwen3.7-text-rerank` + 候选 10。阈值拒答实测后仍不启用（分数随候选池漂移）。
+
+* **反馈闭环**：新增 `storage/db.py`（SQLite：`qa_log` / `feedback`，WAL + 写锁）、`/feedback`、`/stats`，`/chat` 与 `/chat/stream` 返回 `trace_id`；`rag_summarize` 工具改用 `invoke_with_sources`，把 `sources` 写进 `runtime.context` 随请求落库（只存 sources，不存精排分）。新增 `eval/replay_feedback.py` 用评估集回放模拟线上流量。

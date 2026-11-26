@@ -2,6 +2,7 @@ import csv
 import os
 import random
 
+from langchain.tools import ToolRuntime
 from langchain_core.tools import tool
 
 from config import BASE_DIR
@@ -29,13 +30,20 @@ def bind_rag_summarizer(rag_summarizer):
 
 
 @tool
-def rag_summarize(query: str) -> str:
+def rag_summarize(query: str, runtime: ToolRuntime) -> str:
     """从向量库中检索扫地机器人/扫拖机器人的专业资料并总结。入参 query 为检索关键词。"""
     if _rag_summarizer is None:
         return "检索服务未初始化"
     logger.info(f"[tool] rag_summarize query={query}")
     try:
-        return _rag_summarizer.invoke(query)
+        # 用带出处版本，把 sources 顺手写进 runtime.context，供 API 落库（不改工具返回值形态）
+        payload = _rag_summarizer.invoke_with_sources(query)
+        try:
+            runtime.context["rag_sources"] = payload.get("sources", [])
+            runtime.context["rag_rejected"] = payload.get("rejected", False)
+        except Exception as e:  # context 不可写时不影响回答
+            logger.warning(f"写入 rag sources 失败: {e}")
+        return payload["answer"]
     except Exception as e:
         logger.error(f"rag_summarize error: {e}")
         return f"检索失败: {e}"
