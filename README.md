@@ -125,6 +125,7 @@ docker compose up -d --build
 
 - `.env` 不进镜像，由 compose 在运行时注入
 - `chroma_db` 随镜像打包，容器启动即有 194 块（若你 clone 到的仓库里没有 `chroma_db`，首次启动会自动建库，3~5 分钟 + 一次 embedding token）
+- 首次启动的这几分钟里 `docker compose ps` 可能显示 `unhealthy`，属正常，等它变 `healthy` 即可
 - 日志写在宿主机 `logs/`（已挂卷）
 
 常用命令：
