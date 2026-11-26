@@ -518,6 +518,8 @@ Agent 可能多轮调用工具，每次 `rag_summarize` 要检索 + LLM 总结�
 
 * **出处标注**：新增 `prompts/rag_summarize_cited.txt` 与 `RagSummarizeService.invoke_with_sources`，答案带 `[编号]`，同时返回来源文件名与片段。
 
+* **引用加固**：Agent 走的是 `create_agent`，工具只把 `answer` 字符串传出去时编号会被二次改写丢掉、文件名会被模型编造。因此 `main_prompt` 加引用强约束，`rag_summarize` 在返回值末尾附上由 `sources` 生成的真实文件清单（与落库同一份数据），保证「编号 + 文件名」都可溯源。
+
 * **条目对齐切分**：新增 `chunker/structural_splitter.py`，`chunk_strategy: structural|fixed` 可切换；默认 structural（194 块），旧 fixed（326 块）保留作对照。
 
 * **精排（rerank）**：新增 `retrieval/reranker.py`（百炼文本排序 API），`config/chroma.yml` 增 `rerank_enabled / rerank_model / rerank_candidate_k / rerank_reject_threshold`；`RagSummarizeService` 变成"召回 10 → 精排取 3"。80 题 hit@3 由 91.2% 升至 100%（68/68），MRR 0.797 → 0.985；对照了候选深度 10 vs 20 与两个模型，最终选 `qwen3.7-text-rerank` + 候选 10。阈值拒答实测后仍不启用（分数随候选池漂移）。
